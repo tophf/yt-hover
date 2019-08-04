@@ -3,11 +3,11 @@
 const CLASSNAME = 'ihvyoutube';
 const ASPECT_RATIO = 16 / 9;
 
-var iframe;
-var timer;
-var badBubblePath = [];
+let iframe;
+let timer;
+let badBubblePath = [];
 
-var config = {
+let config = {
   'relative-x': 0,
   'relative-y': 0,
   'center-x': 0,
@@ -20,7 +20,7 @@ var config = {
   'scroll': true,
   'smooth': true,
   'dark': false,
-  youtube: false
+  'youtube': false,
 };
 
 chrome.storage.onChanged.addListener(prefs => {
@@ -37,7 +37,7 @@ chrome.storage.local.get(config, prefs => {
   document.addEventListener('click', click);
 });
 
-var smoothScroll = (function() {
+const smoothScroll = (() => {
   let timeLapsed = 0;
   let id, sx, sy, dx, dy, callback;
 
@@ -59,16 +59,16 @@ var smoothScroll = (function() {
     id = window.setTimeout(step, 16);
   }
 
-  return function(x, y, c) {
+  return function (x, y, cb) {
     clearTimeout(id);
-    callback = c;
+    callback = cb;
     timeLapsed = 0;
     sx = document.body.scrollLeft + document.documentElement.scrollLeft;
     sy = document.body.scrollTop + document.documentElement.scrollTop;
     dx = Math.max(0, x - sx);
     dy = Math.max(0, y - sy);
     if (dx === 0 && dy === 0) {
-      return c();
+      return cb();
     }
     step();
   };
@@ -108,8 +108,7 @@ function createPlayer(id, time = '0', rect, isShared) {
       left: calc(50% - ${config.width / 2 - config['center-x']}px);
       top: calc(50% - ${config.width / ASPECT_RATIO / 2 - config['center-y']}px);
     `;
-  }
-  else {
+  } else {
     const {x, y, left, top} = calcRelativePos(rect);
     iframe.setAttribute('style', `
       position: absolute;
@@ -188,7 +187,8 @@ function mouseover(e) {
   } else {
     badBubblePath = e.path.slice(1);
     const a = target.closest('a');
-    if (a) processLink(a);
+    if (a)
+      processLink(a);
   }
 }
 
