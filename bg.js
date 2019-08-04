@@ -10,9 +10,13 @@ chrome.runtime.onMessage.addListener(function ({cmd}) {
 });
 
 function cmdHistory(msg) {
-  chrome.history.addUrl({
-    url: msg.url,
-  });
+  if (!chrome.history) {
+    console.warn('Please re-enable "history" checkbox in the options dialog!');
+  } else {
+    chrome.history.addUrl({
+      url: msg.url,
+    });
+  }
 }
 
 function cmdFindId(msg, sender, sendResponse) {
