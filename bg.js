@@ -1,5 +1,20 @@
 'use strict';
 
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.query({url: '*://*/*'}, tabs => {
+    const code = {code: 'typeof createPlayer'};
+    for (const tab of tabs) {
+      chrome.tabs.executeScript(tab.id, code, result => {
+        if (!chrome.runtime.lastError && result[0] !== 'function') {
+          chrome.tabs.executeScript(tab.id, {file: 'defaults.js', allFrames: true}, () => {
+            chrome.tabs.executeScript(tab.id, {file: 'content.js', allFrames: true});
+          });
+        }
+      });
+    }
+  });
+});
+
 chrome.runtime.onMessage.addListener(function ({cmd}) {
   switch (cmd) {
     case 'history':

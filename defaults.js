@@ -1,6 +1,6 @@
 'use strict';
 
-const DEFAULTS = {
+window.DEFAULTS = {
   'relative-x': 0,
   'relative-y': 0,
   'center-x': 0,
