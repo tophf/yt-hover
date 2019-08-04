@@ -122,19 +122,11 @@ window.running === undefined && (() => {
 
   /** @param {DOMRect} rect */
   function setRelativePos(rect) {
-    const body = document.body;
-    const html = document.documentElement;
-
     const w = config.width;
     const h = w / ASPECT_RATIO;
-
-    const x1 = Math.max(0, rect.left + body.scrollLeft + html.scrollLeft + config['relative-x']);
-    const y1 = Math.max(0, rect.bottom + body.scrollTop + html.scrollTop + config['relative-y']);
-    const vw = Math.max(html.scrollWidth, body.scrollWidth);
-    const vh = Math.max(html.scrollHeight, body.scrollHeight);
-
-    const left = x1 + w <= vw - 10 ? x1 : vw - w - 10;
-    const top = y1 + h <= vh - 10 ? y1 : vh - h - 10;
+    const maxLeft = scrollX + innerWidth - w - 10;
+    const left = Math.max(0, Math.min(maxLeft, rect.left + scrollX + config['relative-x']));
+    const top = Math.max(0, rect.bottom + scrollY + config['relative-y']);
 
     iframe.setAttribute('style', `
       position: absolute;
@@ -143,11 +135,19 @@ window.running === undefined && (() => {
     `);
 
     if (config.scroll) {
-      window.scrollTo({
-        left: Math.max(body.scrollLeft, left + w - html.clientWidth + 10),
-        top: Math.max(body.scrollTop, top + h - html.clientHeight + 10),
-        behavior: config.smooth ? 'smooth' : 'auto',
-      });
+      const revealX = left < scrollX || left + w > innerWidth + scrollX;
+      const revealTop = top < scrollY;
+      const revealBottom = top + h > innerHeight + scrollY;
+      if (revealX || revealTop || revealBottom) {
+        scrollTo({
+          left: revealX ? left : scrollX,
+          top: Math.max(0,
+            revealTop ? top - 10 :
+              revealBottom ? top + h - innerHeight + 10 :
+                scrollY),
+          behavior: config.smooth ? 'smooth' : 'auto',
+        });
+      }
     }
   }
 
