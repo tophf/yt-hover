@@ -135,10 +135,7 @@ function createPlayer(id, time = '0', rect, isShared) {
     if (!isShared) {
       iframe.src = src;
     } else {
-      chrome.runtime.sendMessage({
-        cmd: 'find-id',
-        url: 'https://www.youtube.com/shared?ci=' + id,
-      }, id => {
+      chrome.runtime.sendMessage({cmd: 'find-id', id}, id => {
         if (id)
           iframe.src = src;
         else

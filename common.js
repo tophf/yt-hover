@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.cmd === 'find-id') {
     const req = new XMLHttpRequest();
-    req.open('GET', request.url);
+    req.open('GET', 'https://www.youtube.com/shared?ci=' + request.id);
     req.responseType = 'document';
     req.onload = () => {
       try {
