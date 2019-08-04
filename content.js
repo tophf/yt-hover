@@ -6,31 +6,34 @@ window.running === undefined && (() => {
 
   const CLASSNAME = 'ihvyoutube';
   const ASPECT_RATIO = 16 / 9;
+  const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//youtu.be/"]';
+  const isYoutubePage = location.hostname === 'www.youtube.com';
+
+  const observer = new MutationObserver(() => {
+    document.addEventListener('mouseover', mouseover, {passive: true});
+    observer.disconnect();
+  });
+  const observerConfig = {
+    childList: true,
+    attributes: true,
+    characterData: true,
+    subtree: true,
+  };
 
   let iframe;
   let timer;
-  let badBubblePath = [];
-
   let config = {...window.DEFAULTS};
+  let badBubblePath = [];
+  let lastLink = null;
 
   window.dispatchEvent(new Event(chrome.runtime.id));
-  window.addEventListener(chrome.runtime.id, function unregisterListeners() {
-    // do nothing if we're still alive, probably someone tries to "hack" us
-    if (chrome.i18n)
-      return;
-    window.removeEventListener(chrome.runtime.id, unregisterListeners);
-    document.removeEventListener('mouseover', mouseover);
-    document.removeEventListener('click', click);
-    document.removeEventListener('keydown', keydown);
-    chrome.storage.onChanged.removeListener(onStorageChanged);
-    clearTimeout(timer);
-  });
+  window.addEventListener(chrome.runtime.id, selfDestruct);
 
   chrome.storage.onChanged.addListener(onStorageChanged);
 
   chrome.storage.local.get(config, prefs => {
     config = prefs;
-    if (location.hostname === 'www.youtube.com' && (!config.youtube || top !== window))
+    if (isYoutubePage && (!config.youtube || top !== window))
       return;
     registerListeners();
   });
@@ -40,6 +43,20 @@ window.running === undefined && (() => {
     document.addEventListener('click', click);
     if (iframe)
       document.addEventListener('keydown', keydown);
+  }
+
+  function selfDestruct() {
+    // do nothing if we're still alive, probably someone tries to "hack" us
+    if (chrome.i18n)
+      return;
+    iframe = null;
+    observer.disconnect();
+    window.removeEventListener(chrome.runtime.id, selfDestruct);
+    document.removeEventListener('mouseover', mouseover);
+    document.removeEventListener('click', click);
+    document.removeEventListener('keydown', keydown);
+    chrome.storage.onChanged.removeListener(onStorageChanged);
+    clearTimeout(timer);
   }
 
   function onStorageChanged(prefs) {
@@ -149,8 +166,16 @@ window.running === undefined && (() => {
     } else {
       badBubblePath = e.path.slice(1);
       const a = target.closest('a');
-      if (a)
-        processLink(a);
+      if (a && processLink(a))
+        lastLink = a;
+    }
+
+    if (!isYoutubePage) {
+      lastLink = document.contains(lastLink) ? lastLink : document.querySelector(LINK_SELECTOR);
+      if (!lastLink) {
+        document.removeEventListener('mouseover', mouseover);
+        observer.observe(document.body, observerConfig);
+      }
     }
   }
 
@@ -189,8 +214,10 @@ window.running === undefined && (() => {
     } else if (isShared) {
       id = params.get('ci');
     }
-    if (id)
+    if (id) {
       timer = setTimeout(mouseoverTimer, config.delay, id, params.get('t'), link, isShared);
+      return true;
+    }
   }
 
   function mouseoverTimer(id, time, link, isShared) {
