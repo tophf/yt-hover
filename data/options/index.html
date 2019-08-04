@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YouTube on Hover Options</title>
+  <style>
+    body {
+      font-family: Roboto,sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+    }
+    input[type=number],
+    select {
+      flex: 1;
+      width: 30px;
+      min-width: 0;
+    }
+    td:last-child {
+      display: flex;
+      width: 150px;
+      max-width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <table>
+    <tr>
+      <td>YouTube player width (in pixels)</td>
+      <td><input type="number" id="width"></td>
+    </tr>
+    <tr>
+      <td>Draw a strike-through over YouTube links after preview</td>
+      <td><input type="checkbox" id="strike"></td>
+    </tr>
+    <tr>
+      <td>Add previewed links to the browser history</td>
+      <td><input type="checkbox" id="history"></td>
+    </tr>
+    <tr>
+      <td>Turn off the light while playing</td>
+      <td><input type="checkbox" id="dark"></td>
+    </tr>
+    <tr>
+      <td>Player positioning mode</td>
+      <td>
+        <select id="mode">
+          <option>Relative to the link</option>
+          <option>Center of the screen</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Scroll to player in the "relative" mode</td>
+      <td><input type="checkbox" id="scroll"></td>
+    </tr>
+    <tr>
+      <td>Use smooth scrolling</td>
+      <td><input type="checkbox" id="smooth"></td>
+    <tr>
+      <td>Player offset in the "relative" mode</td>
+      <td>
+        <input type="number" id="relative-x" size="5" maxlength="20">&nbsp;x&nbsp;<input type="number" id="relative-y">
+      </td>
+    </tr>
+    <tr>
+      <td>Player offset in the "center" mode</td>
+      <td>
+        <input type="number" id="center-x">&nbsp;x&nbsp;<input type="number" id="center-y">
+      </td>
+    </tr>
+    <tr>
+      <td>Display the player if mouse is over a link for (in milliseconds)</td>
+      <td><input type="number" id="delay"></td>
+    </tr>
+    <tr>
+      <td>Display the preview panel on youtube.com as well</td>
+      <td><input type="checkbox" id="youtube"></td>
+    </tr>
+  </table>
+
+  <p>
+    <button id="save">Save</button> <span id="status"></span>
+  </p>
+
+  <script src="index.js"></script>
+</body>
+</html>
