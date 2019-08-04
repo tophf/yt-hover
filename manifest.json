@@ -39,9 +39,5 @@
     "page": "data/options/index.html",
     "chrome_style": true
   },
-  "applications": {
-    "gecko": {
-      "id": "{732db00c-07ee-4763-a8c7-fd666803287e}"
-    }
-  }
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsYQSsDr++3eggXgj7r9cxv3OOmmz+5ySI+7sRMSnsLMNpAXjD9zIHq5Ki2KQevb7sS9r3hCdFOch0j++RZAnPDpVxGheRSLNGxuLFBWPq88lOzOh5vOLctovfKuXuRL6lHr1s1Z6mytzse0em93sWS472VHlNw9RkJjfzYkw7ezvgXUU3pvLoNtpk3mGyA/0HUPn11wZl4qaktHH8fWGAl2q4Ja+1YszuaPJ+wdd6FMBrn8jwrFB0rg6KPW56GISPvghW8hz6oyIQLs0bp0uxg82mlApu2hx1EKaF6Xnd/uTLzc24c3m9xXTtKvxwMMCE33XfApPfVB2Rih2DQBlYQIDAQAB"
 }
