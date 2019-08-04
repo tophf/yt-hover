@@ -1,6 +1,12 @@
 'use strict';
 
+const CLASSNAME = 'ihvyoutube';
+const ASPECT_RATIO = 16 / 9;
+
 var iframe;
+var timer;
+var badBubblePath = [];
+
 var config = {
   'relative-x': 0,
   'relative-y': 0,
@@ -16,10 +22,19 @@ var config = {
   'dark': false,
   youtube: false
 };
+
 chrome.storage.onChanged.addListener(prefs => {
   Object.keys(prefs).forEach(name => {
     config[name] = prefs[name].newValue;
   });
+});
+
+chrome.storage.local.get(config, prefs => {
+  config = prefs;
+  if (location.hostname === 'www.youtube.com' && (!config.youtube || top !== window))
+    return;
+  document.addEventListener('mouseover', mouseover, {passive: true});
+  document.addEventListener('click', click);
 });
 
 var smoothScroll = (function() {
@@ -45,7 +60,7 @@ var smoothScroll = (function() {
   }
 
   return function(x, y, c) {
-    window.clearTimeout(id);
+    clearTimeout(id);
     callback = c;
     timeLapsed = 0;
     sx = document.body.scrollLeft + document.documentElement.scrollLeft;
@@ -59,201 +74,199 @@ var smoothScroll = (function() {
   };
 })();
 
-var youtube = {
-  play: (id, rect, shared) => {
-    // https://github.com/schomery/youtube-hover/issues/15
-    let time = (id.split(/[?&]t=/)[1] || '0').split('&')[0];
-    const tmp = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time);
-    if (tmp && tmp.length && tmp[3]) {
-      time = Number(tmp[3]) + Number(tmp[2] || 0) * 60 + Number(tmp[1] || 0) * 60 * 60;
-    }
-    // cleaning id; https://github.com/schomery/youtube-hover/issues/12
-    id = id.split('&')[0].split('?')[0];
-    //
-    iframe = Object.assign(document.createElement('iframe'), {
-      width: config.width,
-      height:  config.width * 180 / 320,
-      sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
-      // unload the gif loader when player is loaded
-      onload: () => {
-        window.setTimeout(() => {
-          if (iframe) {
-            iframe.dataset.loaded = true;
-          }
-        }, 10000);
-      }
-    });
-    iframe.setAttribute('allowFullScreen', '');
+function createPlayer(id, time = '0', rect, isShared) {
+  const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
+  if (s)
+    time = Number(s) + (m || 0) * 60 + (h || 0) * 3600;
+  const src = `https://www.youtube.com/embed/${id}?${
+    new URLSearchParams({
+      fs: 1,
+      autoplay: 1,
+      enablejsapi: 1,
+      start: time,
+    }).toString()
+  }`;
+  iframe = Object.assign(document.createElement('iframe'), {
+    className: CLASSNAME,
+    width: config.width,
+    height: config.width / ASPECT_RATIO,
+    sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
+    allowFullscreen: true,
+    // unload the gif loader when player is loaded
+    onload() {
+      window.setTimeout(() => {
+        if (iframe)
+          iframe.dataset.loaded = true;
+      }, 10000);
+    },
+  });
 
-    function play() {
-      if (shared) {
-        chrome.runtime.sendMessage({
-          cmd: 'find-id',
-          url: 'https://www.youtube.com/shared?ci=' + id
-        }, id => {
-          if (id) {
-            iframe.setAttribute('src', `https://www.youtube.com/embed/${id}?fs=1&autoplay=1&enablejsapi=1&start=${time}`);
-          }
-          else {
-            iframe.dataset.error = true;
-          }
-        });
-      }
-      else {
-        iframe.setAttribute('src', `https://www.youtube.com/embed/${id}?fs=1&autoplay=1&enablejsapi=1&start=${time}`);
-      }
-    }
-
-    if (config.mode === 1) { // center of screen
-      iframe.setAttribute('style', `
-        position: fixed;
-        left: calc(50% - ${config.width / 2 - config['center-x']}px);
-        top: calc(50% - ${config.width * 180 / 320 / 2 - config['center-y']}px);
-      `);
-      play();
-    }
-    else {
-      const x1 = Math.max(0, rect.left + document.body.scrollLeft +
-        document.documentElement.scrollLeft + config['relative-x']);
-      const y1 = Math.max(0, rect.top + rect.height + document.body.scrollTop +
-        document.documentElement.scrollTop + config['relative-y']);
-      const x2 = x1 + config.width;
-      const y2 = y1 + config.width * 180 / 320;
-      const vw = Math.max(
-        document.documentElement.scrollWidth,
-        document.body.scrollWidth
-      );
-      const vh = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      );
-
-      let left = x1;
-      let top = y1;
-      if (x2 > vw - 10) {
-        left = vw - config.width - 10;
-      }
-      if (y2 > vh - 10) {
-        top = vh - config.width * 180 / 320 - 10;
-      }
-      if (config.scroll) {
-        const x = Math.max(
-          document.body.scrollLeft,
-          left + config.width - document.documentElement.clientWidth + 10
-        );
-        const y = Math.max(
-          document.body.scrollTop,
-          top + config.width * 180 / 320 - document.documentElement.clientHeight + 10
-        );
-        if (config.smooth) {
-          smoothScroll(x, y, play);
-        }
-        else {
-          window.scrollTo(x, y);
-          play();
-        }
-      }
-      else {
-        play();
-      }
-
-      iframe.setAttribute('style', `
-        position: absolute;
-        left: ${left}px;
-        top: ${top}px;
-      `);
-    }
-    iframe.setAttribute('class', 'ihvyoutube');
-    iframe.dataset.dark = config.dark;
-    document.body.appendChild(iframe);
+  let startPlaying = true;
+  if (config.mode === 1) { // center of screen
+    iframe.style = `
+      position: fixed;
+      left: calc(50% - ${config.width / 2 - config['center-x']}px);
+      top: calc(50% - ${config.width / ASPECT_RATIO / 2 - config['center-y']}px);
+    `;
   }
-};
+  else {
+    const {x, y, left, top} = calcRelativePos(rect);
+    iframe.setAttribute('style', `
+      position: absolute;
+      left: ${left}px;
+      top: ${top}px;
+    `);
+    if (config.scroll) {
+      if (config.smooth) {
+        smoothScroll(x, y, play);
+        startPlaying = false;
+      } else {
+        window.scrollTo(x, y);
+      }
+    }
+  }
+  if (startPlaying)
+    play();
+  iframe.dataset.dark = config.dark;
+  document.body.appendChild(iframe);
+  document.addEventListener('keydown', keydown);
 
-var timer;
+  function play() {
+    if (!isShared) {
+      iframe.src = src;
+    } else {
+      chrome.runtime.sendMessage({
+        cmd: 'find-id',
+        url: 'https://www.youtube.com/shared?ci=' + id,
+      }, id => {
+        if (id)
+          iframe.src = src;
+        else
+          iframe.dataset.error = true;
+      });
+    }
+  }
+}
+
+/**
+ * @param {DOMRect} rect
+ * @return {{x?: number, y?: number, top: number, left: number}}
+ */
+function calcRelativePos(rect) {
+  const body = document.body;
+  const html = document.documentElement;
+
+  const x1 = Math.max(0, rect.left + body.scrollLeft + html.scrollLeft + config['relative-x']);
+  const y1 = Math.max(0, rect.bottom + body.scrollTop + html.scrollTop + config['relative-y']);
+  const x2 = x1 + config.width;
+  const y2 = y1 + config.width / ASPECT_RATIO;
+
+  const vw = Math.max(html.scrollWidth, body.scrollWidth);
+  const vh = Math.max(html.scrollHeight, body.scrollHeight);
+
+  const left = x2 <= vw - 10 ? x1 : vw - config.width - 10;
+  const top = y2 <= vh - 10 ? y1 : vh - config.width / ASPECT_RATIO - 10;
+
+  let x, y;
+  if (config.scroll) {
+    x = Math.max(body.scrollLeft, left + config.width - html.clientWidth + 10);
+    y = Math.max(body.scrollTop, top + config.width / ASPECT_RATIO - html.clientHeight + 10);
+  }
+
+  return {x, y, left, top};
+}
 
 function mouseover(e) {
   if (timer) {
-    timer = window.clearTimeout(timer);
+    clearTimeout(timer);
+    timer = 0;
   }
-  const target = e.target;
-  if (target && target.nodeType === 1) {
-    const link = target.closest('a');
-    if (link) {
-      const href = link.href;
-      if (!href || iframe) {
-        return;
-      }
-      let shared = false;
-      if (
-        href.indexOf('youtube.com/shared') !== -1 ||
-        href.indexOf('youtube.com/attribution_link') !== -1 ||
-        href.indexOf('youtube.com/watch') !== -1 ||
-        href.indexOf('//youtu.be/') !== -1
-      ) {
-        let id;
-        if (href.indexOf('youtube.com/watch') !== -1) {
-          id = href.match(/v=(.+)/);
-        }
-        else if (href.indexOf('//youtu.be/') !== -1) {
-          id = href.match(/\.be\/(.+)/);
-        }
-        else if (href.indexOf('youtube.com/attribution_link') !== -1) {
-          id = decodeURIComponent(href).match(/v=(.+)/);
-        }
-        else if (href.indexOf('youtube.com/shared') !== -1) {
-          shared = true;
-          id = href.match(/ci=(.+)/);
-        }
+  if (iframe)
+    return;
 
-        if (id && id.length) {
-          timer = window.setTimeout(link => {
-            const rect = link.getBoundingClientRect();
-            youtube.play(id[1], rect, shared);
-            if (config.strike) {
-              [...document.querySelectorAll(`a[href="${href}"]`), link]
-                .forEach(l => l.style['text-decoration'] = 'line-through');
-            }
-            if (config.history) {
-              chrome.runtime.sendMessage({
-                url: href,
-                cmd: 'history'
-              });
-            }
-          }, config.delay, link);
-        }
-      }
-    }
+  const target = e.target;
+  const numBad = badBubblePath.indexOf(target) + 1;
+  if (numBad) {
+    badBubblePath.splice(0, numBad);
+  } else {
+    badBubblePath = e.path.slice(1);
+    const a = target.closest('a');
+    if (a) processLink(a);
   }
 }
+
+/**
+ * @param {HTMLAnchorElement} link
+ */
+function processLink(link) {
+  const h = link.hostname;
+  const isYT = h === 'www.youtube.com' || h === 'youtube.com';
+  const isYTbe = h === 'youtu.be';
+  if (!isYT && !isYTbe)
+    return;
+
+  const p = link.pathname;
+  let isShared, isAttribution, isWatch;
+  if (isYT) {
+    if (p.startsWith('/shared'))
+      isShared = true;
+    else if (p.startsWith('/attribution_link'))
+      isAttribution = true;
+    else if (p.startsWith('/watch'))
+      isWatch = true;
+    else
+      return;
+  }
+
+  let params = new URLSearchParams(link.search);
+  let id;
+  if (isYTbe) {
+    id = p.split('/')[1];
+  } else if (isWatch) {
+    id = params.get('v');
+  } else if (isAttribution) {
+    params = new URLSearchParams(params.get('u').split('?')[1]);
+    id = params.get('v');
+  } else if (isShared) {
+    id = params.get('ci');
+  }
+  if (id)
+    timer = setTimeout(mouseoverTimer, config.delay, id, params.get('t'), link, isShared);
+}
+
+function mouseoverTimer(id, time, link, isShared) {
+  const rect = link.getBoundingClientRect();
+  createPlayer(id, time, rect, isShared);
+  if (config.strike) {
+    for (const el of [...$$(`a[href="${link.href}"]`), link])
+      el.style['text-decoration'] = 'line-through';
+  }
+  if (config.history) {
+    chrome.runtime.sendMessage({
+      url: link.href,
+      cmd: 'history',
+    });
+  }
+}
+
 function click(e) {
-  window.clearTimeout(timer);
-  if (iframe && e.target.closest('.ihvyoutube') === null) {
-    [...document.querySelectorAll('.ihvyoutube')].forEach(f => f.parentNode.removeChild(f));
+  clearTimeout(timer);
+  if (iframe && !e.target.closest(`.${CLASSNAME}`)) {
     iframe = null;
+    for (const el of $$(`.${CLASSNAME}`))
+      el.remove();
     e.preventDefault();
+    document.removeEventListener('keydown', keydown);
   }
 }
+
 function keydown(e) {
   if (iframe && e.code === 'Escape') {
     document.body.dispatchEvent(new Event('click', {bubbles: true}));
     e.preventDefault();
   }
-  /*
-  else if (iframe && e.code === 'Space') {
-    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-  }
-  */
 }
 
-chrome.storage.local.get(config, prefs => {
-  config = prefs;
-  if (document.location.hostname === 'www.youtube.com' && !config.youtube) {
-    return;
-  }
-  if (document.location.hostname === 'www.youtube.com' && window.top !== window) {
-    return;
-  }
-  document.addEventListener('mouseover', mouseover);
-  document.addEventListener('click', click);
-  document.addEventListener('keydown', keydown);
-});
+function $$(selector, base = document) {
+  return base.querySelectorAll(selector);
+}
