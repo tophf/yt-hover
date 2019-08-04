@@ -35,43 +35,6 @@ window.running === undefined && (() => {
     registerListeners();
   });
 
-  const smoothScroll = (() => {
-    let timeLapsed = 0;
-    let id, sx, sy, dx, dy, callback;
-
-    const easingPattern = time => (time < 0.5) ?
-      (8 * time * time * time * time) :
-      (1 - 8 * (--time) * time * time * time);
-
-    function step() {
-      timeLapsed += 16;
-      const percentage = timeLapsed / 400;
-      if (percentage > 1) {
-        window.scrollTo(sx + dx, sy + dy);
-        return callback();
-      }
-      window.scrollTo(
-        Math.floor(sx + (dx * easingPattern(percentage))),
-        Math.floor(sy + (dy * easingPattern(percentage))),
-      );
-      id = window.setTimeout(step, 16);
-    }
-
-    return function (x, y, cb) {
-      clearTimeout(id);
-      callback = cb;
-      timeLapsed = 0;
-      sx = document.body.scrollLeft + document.documentElement.scrollLeft;
-      sy = document.body.scrollTop + document.documentElement.scrollTop;
-      dx = Math.max(0, x - sx);
-      dy = Math.max(0, y - sy);
-      if (dx === 0 && dy === 0) {
-        return cb();
-      }
-      step();
-    };
-  })();
-
   function registerListeners() {
     document.addEventListener('mouseover', mouseover, {passive: true});
     document.addEventListener('click', click);
@@ -112,75 +75,63 @@ window.running === undefined && (() => {
       },
     });
 
-    let startPlaying = true;
-    if (config.mode === 1) { // center of screen
+    if (config.mode === 1) {
+      // center of screen
       iframe.style = `
         position: fixed;
         left: calc(50% - ${config.width / 2 - config['center-x']}px);
         top: calc(50% - ${config.width / ASPECT_RATIO / 2 - config['center-y']}px);
       `;
     } else {
-      const {x, y, left, top} = calcRelativePos(rect);
-      iframe.setAttribute('style', `
-        position: absolute;
-        left: ${left}px;
-        top: ${top}px;
-      `);
-      if (config.scroll) {
-        if (config.smooth) {
-          smoothScroll(x, y, play);
-          startPlaying = false;
-        } else {
-          window.scrollTo(x, y);
-        }
-      }
+      // relative to the link
+      setRelativePos(rect);
     }
-    if (startPlaying)
-      play();
+
+    if (!isShared) {
+      iframe.src = src;
+    } else {
+      chrome.runtime.sendMessage({cmd: 'findId', id}, id => {
+        if (id)
+          iframe.src = src;
+        else
+          iframe.dataset.error = true;
+      });
+    }
+
     iframe.dataset.dark = config.dark;
     document.body.appendChild(iframe);
     registerListeners();
-
-    function play() {
-      if (!isShared) {
-        iframe.src = src;
-      } else {
-        chrome.runtime.sendMessage({cmd: 'findId', id}, id => {
-          if (id)
-            iframe.src = src;
-          else
-            iframe.dataset.error = true;
-        });
-      }
-    }
   }
 
-  /**
-   * @param {DOMRect} rect
-   * @return {{x?: number, y?: number, top: number, left: number}}
-   */
-  function calcRelativePos(rect) {
+  /** @param {DOMRect} rect */
+  function setRelativePos(rect) {
     const body = document.body;
     const html = document.documentElement;
 
+    const w = config.width;
+    const h = w / ASPECT_RATIO;
+
     const x1 = Math.max(0, rect.left + body.scrollLeft + html.scrollLeft + config['relative-x']);
     const y1 = Math.max(0, rect.bottom + body.scrollTop + html.scrollTop + config['relative-y']);
-    const x2 = x1 + config.width;
-    const y2 = y1 + config.width / ASPECT_RATIO;
-
     const vw = Math.max(html.scrollWidth, body.scrollWidth);
     const vh = Math.max(html.scrollHeight, body.scrollHeight);
 
-    const left = x2 <= vw - 10 ? x1 : vw - config.width - 10;
-    const top = y2 <= vh - 10 ? y1 : vh - config.width / ASPECT_RATIO - 10;
+    const left = x1 + w <= vw - 10 ? x1 : vw - w - 10;
+    const top = y1 + h <= vh - 10 ? y1 : vh - h - 10;
 
-    let x, y;
+    iframe.setAttribute('style', `
+      position: absolute;
+      left: ${left}px;
+      top: ${top}px;
+    `);
+
     if (config.scroll) {
-      x = Math.max(body.scrollLeft, left + config.width - html.clientWidth + 10);
-      y = Math.max(body.scrollTop, top + config.width / ASPECT_RATIO - html.clientHeight + 10);
+      window.scrollTo({
+        left: Math.max(body.scrollLeft, left + w - html.clientWidth + 10),
+        top: Math.max(body.scrollTop, top + h - html.clientHeight + 10),
+        behavior: config.smooth ? 'smooth' : 'auto',
+      });
     }
-
-    return {x, y, left, top};
   }
 
   function mouseover(e) {
