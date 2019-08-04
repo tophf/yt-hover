@@ -23,21 +23,3 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     return true;
   }
 });
-
-// FAQs & Feedback
-chrome.storage.local.get('version', prefs => {
-  const version = chrome.runtime.getManifest().version;
-  const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
-  if (isFirefox ? !prefs.version : prefs.version !== version) {
-    chrome.storage.local.set({version}, () => {
-      chrome.tabs.create({
-        url: 'http://add0n.com/youtube-hover.html?version=' + version +
-          '&type=' + (prefs.version ? ('upgrade&p=' + prefs.version) : 'install')
-      });
-    });
-  }
-});
-(function () {
-  const {name, version} = chrome.runtime.getManifest();
-  chrome.runtime.setUninstallURL('http://add0n.com/feedback.html?name=' + name + '&version=' + version);
-})();
