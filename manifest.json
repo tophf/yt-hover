@@ -14,7 +14,7 @@
   "background": {
     "persistent": false,
     "scripts": [
-      "common.js"
+      "bg.js"
     ]
   },
   "content_scripts": [{
