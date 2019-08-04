@@ -164,7 +164,7 @@ window.running === undefined && (() => {
     if (numBad) {
       badBubblePath.splice(0, numBad);
     } else {
-      badBubblePath = e.path.slice(1);
+      badBubblePath = e.composedPath().slice(1);
       const a = target.closest('a');
       if (a && processLink(a))
         lastLink = a;
