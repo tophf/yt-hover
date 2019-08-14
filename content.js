@@ -25,6 +25,7 @@ window.running === undefined && (() => {
   let config = {...window.DEFAULTS};
   let badBubblePath = [];
   let lastLink = null;
+  let hoverX, hoverY, hoverXcur, hoverYcur;
 
   window.dispatchEvent(new Event(chrome.runtime.id));
   window.addEventListener(chrome.runtime.id, selfDestruct);
@@ -32,7 +33,7 @@ window.running === undefined && (() => {
   chrome.storage.onChanged.addListener(onStorageChanged);
 
   chrome.storage.local.get(config, prefs => {
-    config = prefs;
+    config = {...window.DEFAULTS, ...prefs};
     if (isYoutubePage && (!config.youtube || top !== window))
       return;
     registerListeners();
@@ -151,8 +152,12 @@ window.running === undefined && (() => {
     }
   }
 
+  /**
+   * @param {MouseEvent} e
+   */
   function mouseover(e) {
     if (timer) {
+      document.removeEventListener('mousemove', mousemove);
       clearTimeout(timer);
       timer = 0;
     }
@@ -166,8 +171,12 @@ window.running === undefined && (() => {
     } else {
       badBubblePath = e.composedPath().slice(1);
       const a = target.closest('a');
-      if (a && processLink(a))
+      if (a && processLink(a)) {
         lastLink = a;
+        hoverX = e.pageX;
+        hoverY = e.pageY;
+        document.addEventListener('mousemove', mousemove, {passive: true});
+      }
     }
 
     if (!isYoutubePage) {
@@ -177,6 +186,14 @@ window.running === undefined && (() => {
         observer.observe(document.body, observerConfig);
       }
     }
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  function mousemove(e) {
+    hoverXcur = e.pageX;
+    hoverYcur = e.pageY;
   }
 
   /**
@@ -221,8 +238,17 @@ window.running === undefined && (() => {
   }
 
   function mouseoverTimer(id, time, link, isShared) {
-    const rect = link.getBoundingClientRect();
-    createPlayer(id, time, rect, isShared);
+    if (Math.abs(hoverXcur - hoverX) > config.maxMovement ||
+        Math.abs(hoverYcur - hoverY) > config.maxMovement) {
+      hoverX = hoverXcur;
+      hoverY = hoverYcur;
+      timer = setTimeout(mouseoverTimer, config.delay, ...arguments);
+      return;
+    }
+    timer = 0;
+    document.removeEventListener('mousemove', mousemove);
+
+    createPlayer(id, time, link.getBoundingClientRect(), isShared);
     if (config.strike) {
       for (const el of [...$$(`a[href="${link.href}"]`), link])
         el.style['text-decoration'] = 'line-through';

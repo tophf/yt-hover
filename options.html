@@ -5,7 +5,7 @@
   <style>
     body {
       margin: 0 0 1rem;
-      min-width: 20rem;
+      min-width: 25rem;
       padding: 0;
     }
     body > :not(section) {
@@ -50,6 +50,10 @@
     <label>
       <span>Display the player if mouse is over a link for ... milliseconds</span>
       <span><input type="number" id="delay"></span>
+    </label>
+    <label>
+      <span>Only if mouse doesn't move more than ... pixels</span>
+      <span><input type="number" id="maxMovement"></span>
     </label>
     <label>
       <span>Player width (in pixels)</span>

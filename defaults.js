@@ -7,6 +7,7 @@ window.DEFAULTS = {
   'center-y': 0,
   'delay': 1000,
   'width': 500,
+  'maxMovement': 10,
   'mode': 0,
   'strike': true,
   'history': true,
