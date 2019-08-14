@@ -4,81 +4,123 @@
   <title>YouTube on Hover Options</title>
   <style>
     body {
-      font-family: Roboto,sans-serif;
-      font-weight: 400;
-      font-size: 13px;
+      margin: 0 0 1rem;
+      min-width: 20rem;
+      padding: 0;
     }
-    input[type=number],
-    select {
+    body > :not(section) {
+      margin: 1rem 1rem .5rem;
+    }
+    section {
+      margin: .25em 0;
+      padding: 0 0 .25em;
+      border-bottom: 2px dotted #8886;
+    }
+    input[type="number"] {
       flex: 1;
-      width: 30px;
-      min-width: 0;
+      width: 100%;
     }
-    td:last-child {
+    #mode {
+      position: absolute;
+      right: 1rem;
+    }
+    label {
+      display: flex;
+      padding: 1ex 1rem;
+      align-items: center;
+    }
+    label:hover > :first-child {
+      text-decoration: underline;
+    }
+    label > :first-child {
+      width: 100%;
+    }
+    label > :last-child {
       display: flex;
       width: 150px;
       max-width: 150px;
+      align-items: center;
     }
   </style>
 </head>
+
 <body>
-  <table>
-    <tr>
-      <td>YouTube player width (in pixels)</td>
-      <td><input type="number" id="width"></td>
-    </tr>
-    <tr>
-      <td>Draw a strike-through over YouTube links after preview</td>
-      <td><input type="checkbox" id="strike"></td>
-    </tr>
-    <tr>
-      <td>Add previewed links to the browser history</td>
-      <td><input type="checkbox" id="history"></td>
-    </tr>
-    <tr>
-      <td>Turn off the light while playing</td>
-      <td><input type="checkbox" id="dark"></td>
-    </tr>
-    <tr>
-      <td>Player positioning mode</td>
-      <td>
+
+  <section>
+    <label>
+      <span>Display the player if mouse is over a link for ... milliseconds</span>
+      <span><input type="number" id="delay"></span>
+    </label>
+    <label>
+      <span>Player width (in pixels)</span>
+      <span><input type="number" id="width"></span>
+    </label>
+  </section>
+
+  <section>
+    <label>
+      <span>Also activate on www.youtube.com</span>
+      <span><input type="checkbox" id="youtube"></span>
+    </label>
+  </section>
+
+  <section>
+    <label>
+      <span>Player positioning mode</span>
+      <span>
         <select id="mode">
           <option>Relative to the link</option>
           <option>Center of the screen</option>
         </select>
-      </td>
-    </tr>
-    <tr>
-      <td>Scroll to player in the "relative" mode</td>
-      <td><input type="checkbox" id="scroll"></td>
-    </tr>
-    <tr>
-      <td>Use smooth scrolling</td>
-      <td><input type="checkbox" id="smooth"></td>
-    <tr>
-      <td>Player offset in the "relative" mode</td>
-      <td>
-        <input type="number" id="relative-x" size="5" maxlength="20">&nbsp;x&nbsp;<input type="number" id="relative-y">
-      </td>
-    </tr>
-    <tr>
-      <td>Player offset in the "center" mode</td>
-      <td>
-        <input type="number" id="center-x">&nbsp;x&nbsp;<input type="number" id="center-y">
-      </td>
-    </tr>
-    <tr>
-      <td>Display the player if mouse is over a link for (in milliseconds)</td>
-      <td><input type="number" id="delay"></td>
-    </tr>
-    <tr>
-      <td>Display the preview panel on youtube.com as well</td>
-      <td><input type="checkbox" id="youtube"></td>
-    </tr>
-  </table>
+      </span>
+    </label>
+    <label>
+      <span>Player offset in the "relative" mode</span>
+      <span>
+        <input type="number" id="relative-x" size="5" maxlength="20">
+        &nbsp;x&nbsp;
+        <input type="number" id="relative-y">
+      </span>
+    </label>
+    <label>
+      <span>Player offset in the "center" mode</span>
+      <span>
+        <input type="number" id="center-x">
+        &nbsp;x&nbsp;
+        <input type="number" id="center-y">
+      </span>
+    </label>
+  </section>
+
+  <section>
+    <label>
+      <span>Scroll to player in the "relative" mode</span>
+      <span><input type="checkbox" id="scroll"></span>
+    </label>
+    <label>
+      <span>Use smooth scrolling</span>
+      <span><input type="checkbox" id="smooth"></span>
+    </label>
+    <label>
+      <span>Turn off the lights while playing</span>
+      <span><input type="checkbox" id="dark"></span>
+    </label>
+  </section>
+
+  <section>
+    <label>
+      <span>Draw a strike-through over previewed links</span>
+      <span><input type="checkbox" id="strike"></span>
+    </label>
+    <label>
+      <span>Add previewed links to the browser history</span>
+      <span><input type="checkbox" id="history"></span>
+    </label>
+  </section>
 
   <p>
-    <button id="save">Save</button> <span id="status"></span>
+    <button id="save">Save</button>
+    <span id="status"></span>
   </p>
 
   <script src="defaults.js"></script>
