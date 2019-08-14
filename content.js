@@ -247,6 +247,8 @@ window.running === undefined && (() => {
     }
     timer = 0;
     document.removeEventListener('mousemove', mousemove);
+    if (!link.matches(':hover'))
+      return;
 
     createPlayer(id, time, link.getBoundingClientRect(), isShared);
     if (config.strike) {
