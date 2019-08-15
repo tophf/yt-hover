@@ -66,7 +66,7 @@ window.running === undefined && (() => {
     });
   }
 
-  function createPlayer(id, time = '0', rect, isShared) {
+  function createPlayer(id, time, rect, isShared) {
     const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
     if (s)
       time = Number(s) + (m || 0) * 60 + (h || 0) * 3600;
@@ -75,7 +75,8 @@ window.running === undefined && (() => {
         fs: 1,
         autoplay: 1,
         enablejsapi: 1,
-        start: time,
+        // time may be |null| so we can't use a default parameter value
+        start: time || 0,
       }).toString()
     }`;
     iframe = Object.assign(document.createElement('iframe'), {
