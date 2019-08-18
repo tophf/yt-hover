@@ -25,7 +25,15 @@ window.running === undefined && (() => {
   let config = {...window.DEFAULTS};
   let badBubblePath = [];
   let lastLink = null;
-  let hoverX, hoverY, hoverXcur, hoverYcur;
+  const hover = {
+    x: 0,
+    y: 0,
+    curX: 0,
+    curY: 0,
+    focus: false,
+    /** @type Element */
+    target: null,
+  };
 
   window.dispatchEvent(new Event(chrome.runtime.id));
   window.addEventListener(chrome.runtime.id, selfDestruct);
@@ -174,8 +182,10 @@ window.running === undefined && (() => {
       const a = target.closest('a');
       if (a && processLink(a)) {
         lastLink = a;
-        hoverX = e.pageX;
-        hoverY = e.pageY;
+        hover.x = e.pageX;
+        hover.y = e.pageY;
+        hover.target = e.target;
+        hover.focus = document.hasFocus();
         document.addEventListener('mousemove', mousemove, {passive: true});
       }
     }
@@ -193,8 +203,8 @@ window.running === undefined && (() => {
    * @param {MouseEvent} e
    */
   function mousemove(e) {
-    hoverXcur = e.pageX;
-    hoverYcur = e.pageY;
+    hover.curX = e.pageX;
+    hover.curY = e.pageY;
   }
 
   /**
@@ -239,16 +249,18 @@ window.running === undefined && (() => {
   }
 
   function mouseoverTimer(id, time, link, isShared) {
-    if (Math.abs(hoverXcur - hoverX) > config.maxMovement ||
-        Math.abs(hoverYcur - hoverY) > config.maxMovement) {
-      hoverX = hoverXcur;
-      hoverY = hoverYcur;
+    if (Math.abs(hover.curX - hover.x) > config.maxMovement ||
+        Math.abs(hover.curY - hover.y) > config.maxMovement) {
+      hover.x = hover.curX;
+      hover.y = hover.curY;
       timer = setTimeout(mouseoverTimer, config.delay, ...arguments);
       return;
     }
     timer = 0;
     document.removeEventListener('mousemove', mousemove);
-    if (!link.matches(':hover'))
+    if (hover.focus !== document.hasFocus() ||
+        !hover.target.matches(':hover') ||
+        !link.matches(':hover'))
       return;
 
     createPlayer(id, time, link.getBoundingClientRect(), isShared);
