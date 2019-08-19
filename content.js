@@ -49,9 +49,10 @@ window.running === undefined && (() => {
 
   function registerHoverListeners() {
     document.addEventListener('mouseover', mouseover, {passive: true});
-    document.addEventListener('click', click);
-    if (iframe)
+    if (iframe) {
+      document.addEventListener('click', click);
       document.addEventListener('keydown', keydown);
+    }
   }
 
   function unregisterHoverListeners() {
