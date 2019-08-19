@@ -10,7 +10,7 @@ window.running === undefined && (() => {
   const isYoutubePage = location.hostname === 'www.youtube.com';
 
   const observer = new MutationObserver(() => {
-    document.addEventListener('mouseover', mouseover, {passive: true});
+    setHoverListener(true);
     observer.disconnect();
   });
   const observerConfig = {
@@ -44,21 +44,20 @@ window.running === undefined && (() => {
     config = {...window.DEFAULTS, ...prefs};
     if (isYoutubePage && (!config.youtube || top !== window))
       return;
-    registerHoverListeners();
+    setHoverListener(true);
   });
 
-  function registerHoverListeners() {
-    document.addEventListener('mouseover', mouseover, {passive: true});
-    if (iframe) {
-      document.addEventListener('click', click);
-      document.addEventListener('keydown', keydown);
-    }
+  function setHoverListener(enable) {
+    const method = enable ? 'addEventListener' : 'removeEventListener';
+    document[method]('mouseover', mouseover, enable ? {passive: true} : undefined);
   }
 
-  function unregisterHoverListeners() {
-    document.removeEventListener('mouseover', mouseover);
-    document.removeEventListener('click', click);
-    document.removeEventListener('keydown', keydown);
+  function setHoverCancelers(enable) {
+    const method = enable ? 'addEventListener' : 'removeEventListener';
+    if (iframe || !enable) {
+      document[method]('click', click);
+      document[method]('keydown', keydown);
+    }
   }
 
   function selfDestruct() {
@@ -69,20 +68,17 @@ window.running === undefined && (() => {
     observer.disconnect();
     window.removeEventListener(chrome.runtime.id, selfDestruct);
     chrome.storage.onChanged.removeListener(onStorageChanged);
-    unregisterHoverListeners();
-    clearTimeout(timer);
+    setHoverListener(false);
+    setHoverCancelers(false);
+    stopTimer();
   }
 
   function onStorageChanged(prefs) {
     Object.keys(prefs).forEach(name => {
       config[name] = prefs[name].newValue;
     });
-    if (isYoutubePage && prefs.youtube.oldValue !== prefs.youtube.newValue) {
-      if (config.youtube)
-        registerHoverListeners();
-      else
-        unregisterHoverListeners();
-    }
+    if (isYoutubePage && !!prefs.youtube.oldValue !== !!prefs.youtube.newValue)
+      setHoverListener(config.youtube);
   }
 
   function createPlayer(id, time, rect, isShared) {
@@ -138,7 +134,7 @@ window.running === undefined && (() => {
 
     iframe.dataset.dark = config.dark;
     document.body.appendChild(iframe);
-    registerHoverListeners();
+    setHoverCancelers(true);
   }
 
   /** @param {DOMRect} rect */
@@ -178,8 +174,7 @@ window.running === undefined && (() => {
   function mouseover(e) {
     if (timer) {
       document.removeEventListener('mousemove', mousemove);
-      clearTimeout(timer);
-      timer = 0;
+      stopTimer();
     }
     if (iframe)
       return;
@@ -204,7 +199,7 @@ window.running === undefined && (() => {
     if (!isYoutubePage) {
       lastLink = document.contains(lastLink) ? lastLink : document.querySelector(LINK_SELECTOR);
       if (!lastLink) {
-        document.removeEventListener('mouseover', mouseover);
+        setHoverListener(false);
         observer.observe(document.body, observerConfig);
       }
     }
@@ -287,22 +282,30 @@ window.running === undefined && (() => {
     }
   }
 
+  function removePlayer(event) {
+    event.preventDefault();
+    iframe = null;
+    for (const el of $$(`.${CLASSNAME}`))
+      el.remove();
+    setHoverCancelers(false);
+    stopTimer();
+  }
+
+  function stopTimer() {
+    if (timer)
+      clearTimeout(timer);
+    timer = 0;
+  }
+
   function click(e) {
-    clearTimeout(timer);
-    if (iframe && !e.target.closest(`.${CLASSNAME}`)) {
-      iframe = null;
-      for (const el of $$(`.${CLASSNAME}`))
-        el.remove();
-      e.preventDefault();
-      document.removeEventListener('keydown', keydown);
-    }
+    stopTimer();
+    if (iframe && !e.target.closest(`.${CLASSNAME}`))
+      removePlayer(e);
   }
 
   function keydown(e) {
-    if (iframe && e.code === 'Escape') {
-      document.body.dispatchEvent(new Event('click', {bubbles: true}));
-      e.preventDefault();
-    }
+    if (iframe && e.code === 'Escape')
+      removePlayer(e);
   }
 
   function $$(selector, base = document) {
