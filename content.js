@@ -44,14 +44,20 @@ window.running === undefined && (() => {
     config = {...window.DEFAULTS, ...prefs};
     if (isYoutubePage && (!config.youtube || top !== window))
       return;
-    registerListeners();
+    registerHoverListeners();
   });
 
-  function registerListeners() {
+  function registerHoverListeners() {
     document.addEventListener('mouseover', mouseover, {passive: true});
     document.addEventListener('click', click);
     if (iframe)
       document.addEventListener('keydown', keydown);
+  }
+
+  function unregisterHoverListeners() {
+    document.removeEventListener('mouseover', mouseover);
+    document.removeEventListener('click', click);
+    document.removeEventListener('keydown', keydown);
   }
 
   function selfDestruct() {
@@ -61,10 +67,8 @@ window.running === undefined && (() => {
     iframe = null;
     observer.disconnect();
     window.removeEventListener(chrome.runtime.id, selfDestruct);
-    document.removeEventListener('mouseover', mouseover);
-    document.removeEventListener('click', click);
-    document.removeEventListener('keydown', keydown);
     chrome.storage.onChanged.removeListener(onStorageChanged);
+    unregisterHoverListeners();
     clearTimeout(timer);
   }
 
@@ -72,6 +76,12 @@ window.running === undefined && (() => {
     Object.keys(prefs).forEach(name => {
       config[name] = prefs[name].newValue;
     });
+    if (isYoutubePage && prefs.youtube.oldValue !== prefs.youtube.newValue) {
+      if (config.youtube)
+        registerHoverListeners();
+      else
+        unregisterHoverListeners();
+    }
   }
 
   function createPlayer(id, time, rect, isShared) {
@@ -127,7 +137,7 @@ window.running === undefined && (() => {
 
     iframe.dataset.dark = config.dark;
     document.body.appendChild(iframe);
-    registerListeners();
+    registerHoverListeners();
   }
 
   /** @param {DOMRect} rect */
