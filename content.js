@@ -49,14 +49,14 @@ window.running === undefined && (() => {
 
   function setHoverListener(enable) {
     const method = enable ? 'addEventListener' : 'removeEventListener';
-    document[method]('mouseover', mouseover, enable ? {passive: true} : undefined);
+    document[method]('mouseover', onmouseover, enable ? {passive: true} : undefined);
   }
 
   function setHoverCancelers(enable) {
     const method = enable ? 'addEventListener' : 'removeEventListener';
     if (iframe || !enable) {
-      document[method]('click', click);
-      document[method]('keydown', keydown);
+      document[method]('click', onclick);
+      document[method]('keydown', onkeydown);
     }
   }
 
@@ -171,9 +171,9 @@ window.running === undefined && (() => {
   /**
    * @param {MouseEvent} e
    */
-  function mouseover(e) {
+  function onmouseover(e) {
     if (timer) {
-      document.removeEventListener('mousemove', mousemove);
+      document.removeEventListener('mousemove', onmousemove);
       stopTimer();
     }
     if (iframe)
@@ -192,7 +192,7 @@ window.running === undefined && (() => {
         hover.y = e.pageY;
         hover.target = e.target;
         hover.focus = document.hasFocus();
-        document.addEventListener('mousemove', mousemove, {passive: true});
+        document.addEventListener('mousemove', onmousemove, {passive: true});
       }
     }
 
@@ -208,9 +208,26 @@ window.running === undefined && (() => {
   /**
    * @param {MouseEvent} e
    */
-  function mousemove(e) {
+  function onmousemove(e) {
     hover.curX = e.pageX;
     hover.curY = e.pageY;
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  function onclick(e) {
+    stopTimer();
+    if (iframe && !e.target.closest(`.${CLASSNAME}`))
+      removePlayer(e);
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  function onkeydown(e) {
+    if (iframe && e.code === 'Escape')
+      removePlayer(e);
   }
 
   /**
@@ -249,21 +266,21 @@ window.running === undefined && (() => {
       id = params.get('ci');
     }
     if (id) {
-      timer = setTimeout(mouseoverTimer, config.delay, id, params.get('t'), link, isShared);
+      timer = setTimeout(onTimer, config.delay, id, params.get('t'), link, isShared);
       return true;
     }
   }
 
-  function mouseoverTimer(id, time, link, isShared) {
+  function onTimer(id, time, link, isShared) {
     if (Math.abs(hover.curX - hover.x) > config.maxMovement ||
         Math.abs(hover.curY - hover.y) > config.maxMovement) {
       hover.x = hover.curX;
       hover.y = hover.curY;
-      timer = setTimeout(mouseoverTimer, config.delay, ...arguments);
+      timer = setTimeout(onTimer, config.delay, ...arguments);
       return;
     }
     timer = 0;
-    document.removeEventListener('mousemove', mousemove);
+    document.removeEventListener('mousemove', onmousemove);
     if (hover.focus !== document.hasFocus() ||
         !hover.target.matches(':hover') ||
         !link.matches(':hover'))
@@ -295,17 +312,6 @@ window.running === undefined && (() => {
     if (timer)
       clearTimeout(timer);
     timer = 0;
-  }
-
-  function click(e) {
-    stopTimer();
-    if (iframe && !e.target.closest(`.${CLASSNAME}`))
-      removePlayer(e);
-  }
-
-  function keydown(e) {
-    if (iframe && e.code === 'Escape')
-      removePlayer(e);
   }
 
   function $$(selector, base = document) {
