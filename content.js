@@ -174,6 +174,7 @@ window.running === undefined && (() => {
   function onmouseover(e) {
     if (timer) {
       document.removeEventListener('mousemove', onmousemove);
+      document.removeEventListener('auxclick', onclick);
       stopTimer();
     }
     if (iframe)
@@ -193,6 +194,7 @@ window.running === undefined && (() => {
         hover.target = e.target;
         hover.focus = document.hasFocus();
         document.addEventListener('mousemove', onmousemove, {passive: true});
+        document.addEventListener('auxclick', onclick, {passive: true});
       }
     }
 
@@ -217,9 +219,12 @@ window.running === undefined && (() => {
    * @param {MouseEvent} e
    */
   function onclick(e) {
-    stopTimer();
-    if (iframe && !e.target.closest(`.${CLASSNAME}`))
-      removePlayer(e);
+    if (e.type === 'click' ||
+        e.button === 2 && hover.target && withinBounds(hover.target, e.target)) {
+      stopTimer();
+      if (iframe && !e.target.closest(`.${CLASSNAME}`))
+        removePlayer(e);
+    }
   }
 
   /**
@@ -318,4 +323,12 @@ window.running === undefined && (() => {
     return base.querySelectorAll(selector);
   }
 
+  function withinBounds(outer, inner) {
+    const bO = outer.getBoundingClientRect();
+    const b = inner.getBoundingClientRect();
+    return bO.left <= b.left &&
+           bO.top <= b.top &&
+           bO.right >= b.right &&
+           bO.bottom >= b.bottom;
+  }
 })();
