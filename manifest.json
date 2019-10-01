@@ -23,7 +23,7 @@
     "matches": ["<all_urls>"],
     "js": ["defaults.js", "content.js"],
     "css": ["content.css"],
-    "run_at": "document_start",
+    "run_at": "document_end",
     "all_frames": true
   }],
   "homepage_url": "http://add0n.com/youtube-hover.html",
