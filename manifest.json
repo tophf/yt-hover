@@ -21,6 +21,7 @@
   },
   "content_scripts": [{
     "matches": ["<all_urls>"],
+    "exclude_matches": ["https://www.youtube.com/embed/*"],
     "js": ["defaults.js", "content.js"],
     "css": ["content.css"],
     "run_at": "document_end",
