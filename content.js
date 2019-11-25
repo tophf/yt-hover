@@ -9,10 +9,7 @@ window.running === undefined && (() => {
   const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//youtu.be/"]';
   const isYoutubePage = location.hostname === 'www.youtube.com';
 
-  const observer = new MutationObserver(() => {
-    setHoverListener(true);
-    observer.disconnect();
-  });
+  let observer;
   const observerConfig = {
     childList: true,
     attributes: true,
@@ -46,6 +43,11 @@ window.running === undefined && (() => {
     setHoverListener(true);
   });
 
+  function onMutation() {
+    setHoverListener(true);
+    observer.disconnect();
+  }
+
   function setHoverListener(enable) {
     const method = enable ? 'addEventListener' : 'removeEventListener';
     document[method]('mouseover', onmouseover, enable ? {passive: true} : undefined);
@@ -64,7 +66,8 @@ window.running === undefined && (() => {
     if (chrome.i18n)
       return;
     iframe = null;
-    observer.disconnect();
+    if (observer)
+      observer.disconnect();
     window.removeEventListener(chrome.runtime.id, selfDestruct);
     chrome.storage.onChanged.removeListener(onStorageChanged);
     setHoverListener(false);
@@ -201,6 +204,8 @@ window.running === undefined && (() => {
       lastLink = document.contains(lastLink) ? lastLink : document.querySelector(LINK_SELECTOR);
       if (!lastLink) {
         setHoverListener(false);
+        if (!observer)
+          observer = new MutationObserver(onMutation);
         observer.observe(document.body, observerConfig);
       }
     }
