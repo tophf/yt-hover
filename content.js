@@ -25,15 +25,14 @@ window.running === undefined && (() => {
   let config = {...window.DEFAULTS};
   let badBubblePath = [];
   let lastLink = null;
-  const hover = {
-    x: 0,
-    y: 0,
-    curX: 0,
-    curY: 0,
-    focus: false,
-    /** @type Element */
-    target: null,
-  };
+
+  let hoverX = 0;
+  let hoverY = 0;
+  let hoverUrl = '';
+  let hoverDistance = 0;
+  let hoverFocus = false;
+  /** @type Element */
+  let hoverTarget = null;
 
   window.dispatchEvent(new Event(chrome.runtime.id));
   window.addEventListener(chrome.runtime.id, selfDestruct);
@@ -179,8 +178,7 @@ window.running === undefined && (() => {
     }
     if (iframe)
       return;
-
-    const target = e.target;
+    const {target} = e;
     const numBad = badBubblePath.indexOf(target) + 1;
     if (numBad) {
       badBubblePath.splice(0, numBad);
@@ -189,10 +187,11 @@ window.running === undefined && (() => {
       const a = target.closest('a');
       if (a && processLink(a)) {
         lastLink = a;
-        hover.x = e.pageX;
-        hover.y = e.pageY;
-        hover.target = e.target;
-        hover.focus = document.hasFocus();
+        hoverX = e.pageX;
+        hoverY = e.pageY;
+        hoverTarget = e.target;
+        hoverFocus = document.hasFocus();
+        hoverUrl = location.href;
         document.addEventListener('mousemove', onmousemove, {passive: true});
         document.addEventListener('auxclick', onclick, {passive: true});
       }
@@ -210,9 +209,10 @@ window.running === undefined && (() => {
   /**
    * @param {MouseEvent} e
    */
-  function onmousemove(e) {
-    hover.curX = e.pageX;
-    hover.curY = e.pageY;
+  function onmousemove({pageX: x, pageY: y}) {
+    hoverDistance += Math.sqrt((x - hoverX) ** 2 + (y - hoverY) ** 2);
+    hoverX = x;
+    hoverY = y;
   }
 
   /**
@@ -220,7 +220,7 @@ window.running === undefined && (() => {
    */
   function onclick(e) {
     if (e.type === 'click' ||
-        e.button === 2 && hover.target && withinBounds(hover.target, e.target)) {
+        e.button === 2 && hoverTarget && withinBounds(hoverTarget, e.target)) {
       stopTimer();
       if (iframe && !e.target.closest(`.${CLASSNAME}`))
         removePlayer(e);
@@ -271,24 +271,27 @@ window.running === undefined && (() => {
       id = params.get('ci');
     }
     if (id) {
-      timer = setTimeout(onTimer, config.delay, id, params.get('t'), link, isShared);
+      setTimer(id, params.get('t'), link, isShared);
       return true;
     }
   }
 
+  function setTimer() {
+    hoverDistance = 0;
+    timer = setTimeout(onTimer, config.delay, ...arguments);
+  }
+
   function onTimer(id, time, link, isShared) {
-    if (Math.abs(hover.curX - hover.x) > config.maxMovement ||
-        Math.abs(hover.curY - hover.y) > config.maxMovement) {
-      hover.x = hover.curX;
-      hover.y = hover.curY;
-      timer = setTimeout(onTimer, config.delay, ...arguments);
+    if (hoverDistance > config.maxMovement) {
+      setTimer.apply(0, arguments);
       return;
     }
     timer = 0;
     document.removeEventListener('mousemove', onmousemove);
-    if (hover.focus !== document.hasFocus() ||
-        !hover.target.matches(':hover') ||
-        !link.matches(':hover'))
+    if (hoverFocus !== document.hasFocus() ||
+        !hoverTarget.matches(':hover') ||
+        !link.matches(':hover') ||
+        hoverUrl !== location.href)
       return;
 
     createPlayer(id, time, link.getBoundingClientRect(), isShared);
