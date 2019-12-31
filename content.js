@@ -143,7 +143,8 @@ window.running === undefined && (() => {
   function setRelativePos(rect) {
     const w = config.width;
     const h = w / ASPECT_RATIO;
-    const maxLeft = scrollX + innerWidth - w - 10;
+    const se = document.scrollingElement;
+    const maxLeft = scrollX + innerWidth - w - 10 - (se.scrollHeight > se.offsetHeight ? 30 : 0);
     const left = Math.max(0, Math.min(maxLeft, rect.left + scrollX + config['relative-x']));
     const top = Math.max(0, rect.bottom + scrollY + config['relative-y']);
 
