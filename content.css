@@ -6,18 +6,6 @@
   resize: both;
   overflow: hidden;
 }
-::-webkit-resizer {
-  border: 2px solid yellow;
-  background: blue;
-  box-shadow: 0 0 2px 5px red;
-  outline: 2px dashed green;
-
-  /*size does not work*/
-  display:block;
-  width: 150px !important;
-  height: 150px !important;
-}
-
 .ihvyoutube:not([data-loaded=true]) {
   background-image: url('chrome-extension://__MSG_@@extension_id__/data/loader.gif');
 }
