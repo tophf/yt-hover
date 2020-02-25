@@ -187,8 +187,9 @@ window.running === undefined && (() => {
     if (numBad) {
       badBubblePath.splice(0, numBad);
     } else {
-      badBubblePath = e.composedPath().slice(1);
-      const a = target.closest('a');
+      const path = e.composedPath();
+      const a = isYoutubePage ? findYoutubeAnchor(target, path) : path.find(isAnchor);
+      badBubblePath = path.slice(1);
       if (a && processLink(a)) {
         lastLink = a;
         hoverX = e.pageX;
@@ -330,6 +331,28 @@ window.running === undefined && (() => {
 
   function $$(selector, base = document) {
     return base.querySelectorAll(selector);
+  }
+
+  function findYoutubeAnchor(el, path) {
+    const {localName} = el;
+    return (
+      localName === 'a' ||
+      localName === 'img' ||
+      path.some(isMovingThumbnailYT) ||
+      !path.some(isThumbnailYT)
+    ) && path.find(isAnchor);
+  }
+
+  function isAnchor(el) {
+    return el.localName === 'a';
+  }
+
+  function isThumbnailYT(el) {
+    return el.localName === 'ytd-thumbnail';
+  }
+
+  function isMovingThumbnailYT(el) {
+    return el.localName === 'ytd-moving-thumbnail-renderer';
   }
 
   function withinBounds(outer, inner) {
