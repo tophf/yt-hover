@@ -251,27 +251,17 @@ window.running === undefined && (() => {
     const isYTbe = h === 'youtu.be';
     if (!isYT && !isYTbe)
       return;
-
     const p = link.pathname;
-    let isShared, isAttribution, isWatch;
-    if (isYT) {
-      if (p.startsWith('/shared'))
-        isShared = true;
-      else if (p.startsWith('/attribution_link'))
-        isAttribution = true;
-      else if (p.startsWith('/watch'))
-        isWatch = true;
-      else
-        return;
-    }
-
+    const isShared = isYT && p.startsWith('/shared');
     let params = new URLSearchParams(link.search);
     let id;
     if (isYTbe) {
       id = p.split('/')[1];
-    } else if (isWatch) {
+    } else if (p.startsWith('/embed/')) {
+      id = p.split('/')[2];
+    } else if (p.startsWith('/watch')) {
       id = params.get('v');
-    } else if (isAttribution) {
+    } else if (p.startsWith('/attribution_link')) {
       params = new URLSearchParams(params.get('u').split('?')[1]);
       id = params.get('v');
     } else if (isShared) {
