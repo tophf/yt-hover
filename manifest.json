@@ -2,8 +2,8 @@
   "name": "YouTube™ on Hover Preview",
   "short_name": "ihvyoutube",
   "description": "View YouTube while hovering mouse over a YouTube link on any website",
-  "author": "Jeremy Schomery",
-  "version": "0.1.9",
+  "author": "tophf + Jeremy Schomery",
+  "version": "1.0.0",
   "manifest_version": 2,
   "minimum_chrome_version": "63",
   "permissions": [
@@ -16,30 +16,29 @@
   "background": {
     "persistent": false,
     "scripts": [
-      "bg.js"
+      "bg/bg.js"
     ]
   },
   "content_scripts": [{
-    "matches": ["<all_urls>"],
+    "matches": ["*://*/*"],
     "exclude_matches": ["https://www.youtube.com/embed/*"],
-    "js": ["defaults.js", "content.js"],
-    "css": ["content.css"],
-    "run_at": "document_end",
-    "all_frames": true
+    "js": ["sharedjs/defaults.js", "content/hover.js"],
+    "all_frames": true,
+    "match_about_blank": true
   }],
   "homepage_url": "http://add0n.com/youtube-hover.html",
   "icons": {
-    "16": "icon/16.png",
-    "32": "icon/32.png",
-    "48": "icon/48.png",
-    "128": "icon/128.png"
+    "16": "ui/icon/16.png",
+    "32": "ui/icon/32.png",
+    "48": "ui/icon/48.png",
+    "128": "ui/icon/128.png"
   },
   "web_accessible_resources": [
-    "data/*.gif",
-    "data/*.svg"
+    "ui/img/*.gif",
+    "ui/img/*.svg"
   ],
   "options_ui": {
-    "page": "options.html",
+    "page": "ui/options.html",
     "chrome_style": true
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsYQSsDr++3eggXgj7r9cxv3OOmmz+5ySI+7sRMSnsLMNpAXjD9zIHq5Ki2KQevb7sS9r3hCdFOch0j++RZAnPDpVxGheRSLNGxuLFBWPq88lOzOh5vOLctovfKuXuRL6lHr1s1Z6mytzse0em93sWS472VHlNw9RkJjfzYkw7ezvgXUU3pvLoNtpk3mGyA/0HUPn11wZl4qaktHH8fWGAl2q4Ja+1YszuaPJ+wdd6FMBrn8jwrFB0rg6KPW56GISPvghW8hz6oyIQLs0bp0uxg82mlApu2hx1EKaF6Xnd/uTLzc24c3m9xXTtKvxwMMCE33XfApPfVB2Rih2DQBlYQIDAQAB"
