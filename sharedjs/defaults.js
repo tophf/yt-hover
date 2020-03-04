@@ -1,18 +1,18 @@
 'use strict';
 
 window.DEFAULTS = {
-  'relative-x': 0,
-  'relative-y': 0,
   'center-x': 0,
   'center-y': 0,
+  'dark': false,
   'delay': 1000,
-  'width': 500,
+  'history': true,
   'maxMovement': 10,
   'mode': 0,
-  'strike': true,
-  'history': true,
+  'relative-x': 0,
+  'relative-y': 0,
   'scroll': true,
   'smooth': true,
-  'dark': false,
+  'strike': true,
+  'width': 500,
   'youtube': false,
 };

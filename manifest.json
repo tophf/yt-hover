@@ -5,7 +5,7 @@
   "author": "tophf + Jeremy Schomery",
   "version": "1.0.0",
   "manifest_version": 2,
-  "minimum_chrome_version": "63",
+  "minimum_chrome_version": "55",
   "permissions": [
     "storage",
     "<all_urls>"
@@ -39,7 +39,7 @@
   ],
   "options_ui": {
     "page": "ui/options.html",
-    "chrome_style": true
+    "chrome_style": false
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsYQSsDr++3eggXgj7r9cxv3OOmmz+5ySI+7sRMSnsLMNpAXjD9zIHq5Ki2KQevb7sS9r3hCdFOch0j++RZAnPDpVxGheRSLNGxuLFBWPq88lOzOh5vOLctovfKuXuRL6lHr1s1Z6mytzse0em93sWS472VHlNw9RkJjfzYkw7ezvgXUU3pvLoNtpk3mGyA/0HUPn11wZl4qaktHH8fWGAl2q4Ja+1YszuaPJ+wdd6FMBrn8jwrFB0rg6KPW56GISPvghW8hz6oyIQLs0bp0uxg82mlApu2hx1EKaF6Xnd/uTLzc24c3m9xXTtKvxwMMCE33XfApPfVB2Rih2DQBlYQIDAQAB"
 }

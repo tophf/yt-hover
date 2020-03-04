@@ -1,56 +1,36 @@
 /* global DEFAULTS */
 'use strict';
 
-restore();
-$id('save').onclick = save;
+const VALUE_SOURCE = {
+  'checkbox': 'checked',
+  'number': 'valueAsNumber',
+  'select-one': 'selectedIndex',
+};
 
-function save() {
-  const prefs = {};
-  for (const k of Object.keys(DEFAULTS)) {
-    const el = $id(k);
-    prefs[k] = el[getValueName(el)];
-  }
-  chrome.storage.local.set(prefs, () => {
-    $id('status').textContent = 'Options saved.';
-    setTimeout(() => ($id('status').textContent = ''), 750);
-    restore();
-  });
-}
+const $id = id => document.getElementById(id);
+const $getValue = el => el[VALUE_SOURCE[el.type] || 'value'];
+const $setValue = (el, value) => (el[VALUE_SOURCE[el.type] || 'value'] = value);
 
-function restore() {
-  chrome.storage.local.get(DEFAULTS, prefs => {
-    for (const [k, v] of Object.entries(prefs)) {
-      const el = $id(k);
-      el[getValueName(el)] = v;
-    }
-    if (prefs.history)
-      handleHistoryPermission();
-  });
-}
+const save = ({target: el}) => {
+  let value = $getValue(el);
+  if (el.id === 'delay') value *= 1000;
+  chrome.storage.local.set({[el.id]: value});
+};
 
-function handleHistoryPermission() {
-  chrome.permissions.contains({permissions: ['history']}, granted => {
-    if (!granted) {
-      const el = $id('history');
-      el.checked = false;
-      el.onclick = () => chrome.permissions.request({permissions: ['history']});
-    }
-  });
-}
+addEventListener('change', save);
+addEventListener('input', save);
 
-function getValueName(el) {
-  switch (el.type) {
-    case 'checkbox':
-      return 'checked';
-    case 'number':
-      return 'valueAsNumber';
-    case 'select-one':
-      return 'selectedIndex';
-    default:
-      return 'value';
-  }
-}
+Object.assign($id('history'), {
+  onclick() {
+    if (this.checked && !chrome.history)
+      chrome.permissions.request({permissions: ['history']}, ok => (this.checked = ok));
+    else if (!this.checked && chrome.history)
+      chrome.permissions.remove({permissions: ['history']}, () => location.reload());
+  },
+});
 
-function $id(id) {
-  return document.getElementById(id);
-}
+chrome.storage.local.get(DEFAULTS, prefs => {
+  prefs.delay = isNaN(prefs.delay) ? DEFAULTS.delay : prefs.delay / 1000;
+  for (const [k, v] of Object.entries(prefs))
+    $setValue($id(k), k === 'history' ? chrome.history && v : v);
+});

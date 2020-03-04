@@ -103,7 +103,7 @@ window.INJECTED !== 1 && (() => {
     Object.keys(prefs).forEach(name => {
       config[name] = prefs[name].newValue;
     });
-    if (isYoutubePage && !!prefs.youtube.oldValue !== !!prefs.youtube.newValue)
+    if (isYoutubePage && prefs.youtube && !!prefs.youtube.oldValue !== !!config.youtube)
       setHoverListener(config.youtube);
   }
 

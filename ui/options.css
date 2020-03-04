@@ -1,0 +1,54 @@
+body {
+  width: 25rem;
+}
+section {
+  margin: 1em 0;
+  padding: 0 0 1em;
+  border-bottom: 2px dotted #8886;
+}
+section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+input[type="number"] {
+  flex: 1;
+  width: 100%;
+}
+label {
+  display: flex;
+  padding: .25em 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+label.checkbox {
+  justify-content: flex-start;
+}
+label input[type=number] {
+  flex: 0 4rem;
+  text-align: right;
+}
+label > span {
+  display: flex;
+  flex: 0 8rem;
+  justify-content: flex-end;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #aaa;
+    background: #222;
+  }
+  input, select {
+    background: #111;
+    color: #BBB;
+    border: 1px solid #555;
+  }
+  input[type="checkbox"] {
+    filter: invert(1);
+  }
+  @supports (-moz-appearance: none) {
+    input[type="checkbox"] {
+      filter: none;
+    }
+  }
+}

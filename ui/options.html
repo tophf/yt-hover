@@ -1,133 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>YouTube on Hover Options</title>
-  <style>
-    body {
-      margin: 0 0 1rem;
-      min-width: 25rem;
-      padding: 0;
-    }
-    body > :not(section) {
-      margin: 1rem 1rem .5rem;
-    }
-    section {
-      margin: .25em 0;
-      padding: 0 0 .25em;
-      border-bottom: 2px dotted #8886;
-    }
-    input[type="number"] {
-      flex: 1;
-      width: 100%;
-    }
-    #mode {
-      position: absolute;
-      right: 1rem;
-    }
-    label {
-      display: flex;
-      padding: 1ex 1rem;
-      align-items: center;
-    }
-    label:hover > :first-child {
-      text-decoration: underline;
-    }
-    label > :first-child {
-      width: 100%;
-    }
-    label > :last-child {
-      display: flex;
-      width: 150px;
-      max-width: 150px;
-      align-items: center;
-    }
-  </style>
+  <link href="options.css" rel="stylesheet"/>
 </head>
 
 <body>
+<section>
+  <label>Display the player if mouse is over a link for ... seconds
+    <input type=number id=delay min=0 max=10 step=0.25>
+  </label>
+  <label>Only if mouse cursor movement is less than ... pixels
+    <input type=number id=maxMovement min=0 max=1000 step=1>
+  </label>
+  <label>Player width in pixels
+    <input type=number id=width min=200 max=10000 step=1>
+  </label>
+</section>
 
-  <section>
-    <label>
-      <span>Display the player if mouse is over a link for ... milliseconds</span>
-      <span><input type="number" id="delay"></span>
-    </label>
-    <label>
-      <span>Only if mouse doesn't move more than ... pixels</span>
-      <span><input type="number" id="maxMovement"></span>
-    </label>
-    <label>
-      <span>Player width (in pixels)</span>
-      <span><input type="number" id="width"></span>
-    </label>
-  </section>
+<section>
+  <label class=checkbox><input type=checkbox id=youtube>Also activate on www.youtube.com</label>
+</section>
 
-  <section>
-    <label>
-      <span>Also activate on www.youtube.com</span>
-      <span><input type="checkbox" id="youtube"></span>
-    </label>
-  </section>
+<section>
+  <label>Player positioning mode
+    <select id=mode>
+      <option>Relative to the link
+      <option>Center of the screen
+    </select>
+  </label>
+  <label>Player offset in the "relative" mode
+    <span>
+      <input type=number id="relative-x" min=0 max=10000 step=1>&nbsp;x&nbsp;
+      <input type=number id="relative-y" min=0 max=10000 step=1>
+    </span>
+  </label>
+  <label>Player offset in the "center" mode
+    <span>
+      <input type=number id="center-x" min=0 max=10000 step=1>&nbsp;x&nbsp;
+      <input type=number id="center-y" min=0 max=10000 step=1>
+    </span>
+  </label>
+</section>
 
-  <section>
-    <label>
-      <span>Player positioning mode</span>
-      <span>
-        <select id="mode">
-          <option>Relative to the link</option>
-          <option>Center of the screen</option>
-        </select>
-      </span>
-    </label>
-    <label>
-      <span>Player offset in the "relative" mode</span>
-      <span>
-        <input type="number" id="relative-x" size="5" maxlength="20">
-        &nbsp;x&nbsp;
-        <input type="number" id="relative-y">
-      </span>
-    </label>
-    <label>
-      <span>Player offset in the "center" mode</span>
-      <span>
-        <input type="number" id="center-x">
-        &nbsp;x&nbsp;
-        <input type="number" id="center-y">
-      </span>
-    </label>
-  </section>
+<section>
+  <label class=checkbox><input type=checkbox id=scroll>Scroll to player in the "relative" mode</label>
+  <label class=checkbox><input type=checkbox id=smooth>Use smooth scrolling</label>
+  <label class=checkbox><input type=checkbox id=dark>Turn off the lights while playing</label>
+</section>
 
-  <section>
-    <label>
-      <span>Scroll to player in the "relative" mode</span>
-      <span><input type="checkbox" id="scroll"></span>
-    </label>
-    <label>
-      <span>Use smooth scrolling</span>
-      <span><input type="checkbox" id="smooth"></span>
-    </label>
-    <label>
-      <span>Turn off the lights while playing</span>
-      <span><input type="checkbox" id="dark"></span>
-    </label>
-  </section>
+<section>
+  <label class=checkbox><input type=checkbox id=strike>Draw a strike-through over previewed links</label>
+  <label class=checkbox><input type=checkbox id=history>Add previewed links to the browser history</label>
+</section>
 
-  <section>
-    <label>
-      <span>Draw a strike-through over previewed links</span>
-      <span><input type="checkbox" id="strike"></span>
-    </label>
-    <label>
-      <span>Add previewed links to the browser history</span>
-      <span><input type="checkbox" id="history"></span>
-    </label>
-  </section>
-
-  <p>
-    <button id="save">Save</button>
-    <span id="status"></span>
-  </p>
-
-  <script src="/sharedjs/defaults.js"></script>
-  <script src="options.js"></script>
+<script src="/sharedjs/defaults.js"></script>
+<script src="options.js"></script>
 </body>
 </html>
