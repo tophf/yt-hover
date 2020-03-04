@@ -17,7 +17,6 @@ global sendCmd
         all: initial;
         border: ${BORDER_WIDTH} solid #3338;
         box-sizing: content-box;
-        box-shadow: 0 0 30px #000;
         background: transparent center center no-repeat;
         background-image: url("${chrome.runtime.getURL('ui/img/loader.gif')}");
         z-index: 2147483647;
