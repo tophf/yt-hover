@@ -23,7 +23,7 @@ global sendCmd
         z-index: 2147483647;
         cursor: move;
         opacity: 0;
-        transition: opacity .5s;
+        transition: opacity .25s;
       }
     `) + `
       iframe {
@@ -313,8 +313,8 @@ global sendCmd
     const rect = link.getBoundingClientRect();
     const w = config.width;
     const h = w / ASPECT_RATIO;
-    const se = document.scrollingElement;
-    const maxLeft = scrollX + innerWidth - w - 10 - (se.scrollHeight > se.offsetHeight ? 30 : 0);
+    const se = document.scrollingElement || document.body;
+    const maxLeft = scrollX + innerWidth - w - 10 - (se.scrollHeight > innerHeight ? 30 : 0);
     const left = Math.max(0, Math.min(maxLeft, rect.left + scrollX + config['relative-x']));
     const top = Math.max(0, rect.bottom + scrollY + config['relative-y']);
     if (config.scroll) {
