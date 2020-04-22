@@ -10,7 +10,7 @@ Click-and-drag the border or the corners to move/resize.
 
 The position/size is changed only for this preview. To set the global size, open the options UI from the toolbar icon menu.
 
-![options](https://i.imgur.com/97amZUs.png)
+![options](https://i.imgur.com/hqUYQrx.png)
 
 ### Autoplay in Chrome
 
