@@ -315,6 +315,9 @@
       autoplay: true,
       controls: true,
       volume: app.config.volume,
+      onvolumechange() {
+        chrome.storage.sync.set({volume: this.volume});
+      },
     });
   }
 
