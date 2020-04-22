@@ -5,6 +5,7 @@
   const ASPECT_RATIO = 16 / 9;
   const MIN_WIDTH = 200;
   const BORDER_WIDTH = '4px';
+  const PROGRESS_CURSOR = 'progress';
   const STYLES = {
     //language=CSS
     main: `
@@ -294,6 +295,8 @@
           $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
         ]));
     dom.actor.onload = () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3);
+    const isAsync = isShared || app.config.native;
+    const cursor = isAsync && showProgress(link);
     try {
       if (isShared)
         id = await app.sendCmd('findId', id);
@@ -303,6 +306,8 @@
     } catch (e) {
       cssAppend(STYLES.error, thisStyle);
     }
+    if (isAsync)
+      hideProgress(link, cursor);
   }
 
   function createDomVideo() {
@@ -507,5 +512,18 @@
       a[0] = a[b % a.length];
       a[b % a.length] = c;
     }
+  }
+
+  function showProgress({style, style: {cursor}}) {
+    style.setProperty('cursor', PROGRESS_CURSOR, 'important');
+    return cursor;
+  }
+
+  function hideProgress(link, cursor) {
+    const {style} = link;
+    if (style.cursor === PROGRESS_CURSOR)
+      style.cursor = cursor;
+    if (!style.length)
+      link.removeAttribute('style');
   }
 })();
