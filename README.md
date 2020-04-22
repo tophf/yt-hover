@@ -2,13 +2,11 @@
 
 Fully reworked internally with a couple of minor features added.
 
-![ui](https://i.imgur.com/WfLUOa1.png)
+* Draggable and resizable preview. Click-and-drag the border or the corners to move/resize. The position/size is changed only for this preview. To set the global size, open the options UI from the toolbar icon menu.
 
-### Draggable and resizable preview:
+* Mouse movement threshold. Helps avoiding unwanted activation while you interact with the page, link, or a thumbnail. Hold the mouse still for the configured duration to activate the preview. 
 
-Click-and-drag the border or the corners to move/resize.
-
-The position/size is changed only for this preview. To set the global size, open the options UI from the toolbar icon menu.
+* Native browser player (up to 720p when audio is present)
 
 ![options](https://i.imgur.com/hqUYQrx.png)
 
