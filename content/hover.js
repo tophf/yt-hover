@@ -75,7 +75,7 @@ window.INJECTED !== 1 && (() => {
 
   chrome.storage.onChanged.addListener(onStorageChanged);
 
-  chrome.storage.local.get(app.config, prefs => {
+  chrome.storage.sync.get(app.config, prefs => {
     app.config = {...DEFAULTS, ...prefs};
     if (isYoutubePage && (!app.config.youtube || top !== window))
       return;

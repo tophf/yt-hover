@@ -10,7 +10,7 @@ const valueProp = ({type}) =>
 document.oninput = ({target: el}) => {
   let value = el[valueProp(el)];
   if (el.id === 'delay') value *= 1000;
-  chrome.storage.local.set({[el.id]: value});
+  chrome.storage.sync.set({[el.id]: value});
 };
 
 document.getElementById('history').onclick = function () {
@@ -25,7 +25,7 @@ document.getElementById('history').onclick = function () {
   }
 };
 
-chrome.storage.local.get(DEFAULTS, prefs => {
+chrome.storage.sync.get(DEFAULTS, prefs => {
   prefs.delay = isNaN(prefs.delay) ? DEFAULTS.delay : prefs.delay / 1000;
   for (const [k, v] of Object.entries(prefs)) {
     const el = document.getElementById(k);
