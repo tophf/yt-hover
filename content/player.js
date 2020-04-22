@@ -12,20 +12,21 @@
         all: initial;
         border: ${BORDER_WIDTH} solid #3338;
         box-sizing: content-box;
-        background: transparent center center no-repeat;
+        background: #000 center center no-repeat;
         z-index: 2147483647;
         cursor: move;
         opacity: 0;
         transition: opacity .25s;
       }
     ` + `
-      iframe {
+      iframe, video {
         width: 100%;
         height: 100%;
         border: none;
         overflow: hidden;
         background: none;
         position: relative;
+        outline: none;
       }
       #resizers {
         position: absolute;
@@ -109,6 +110,8 @@
   const {app} = window;
 
   let dom = {
+    /** @type HTMLIFrameElement | HTMLVideoElement */
+    actor: null,
     /** @type HTMLElement */
     player: null,
     /** @type HTMLElement */
@@ -153,6 +156,12 @@
       shifter.onMouseDown(false);
       shifter.target = null;
       window.addEventListener('click', shifter.consumeClick, true);
+      if (dom.actor) {
+        const {clientX, clientY} = shifter.move;
+        if (clientX === e.clientX &&
+            clientY === e.clientY)
+          dom.actor[dom.actor.paused ? 'play' : 'pause']();
+      }
     },
     onSelection() {
       const sel = getSelection();
@@ -247,10 +256,10 @@
      * @param {HTMLAnchorElement} opts.link
      * @param {string} opts.time
      */
-    create(opts) {
+    async create(opts) {
+      await createDom(opts);
       if (app.config.strike) strikeLinks(opts.link);
       if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
-      createDom(opts);
       document.body.appendChild(dom.player);
       setTimeout(() => cssAppend(STYLES.fadein), 250);
       shifter.move.init();
@@ -268,8 +277,8 @@
     },
   };
 
-  function createDom({id, time, link, isShared}) {
-    let frame, thisStyle;
+  async function createDom({id, time, link, isShared}) {
+    let thisStyle;
     (dom.player = $div({onmousedown: shifter.onMouseDown}))
       .attachShadow({mode: 'closed'})
       .append(
@@ -277,28 +286,38 @@
           STYLES.main +
           (app.config.dark ? STYLES.dark : '') +
           cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
-        frame = $create('iframe', {
-          allowFullscreen: true,
-          sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
-          onload: () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3),
-        }),
+        dom.actor = app.config.native ? createDomVideo() : createDomFrame(),
         dom.resizers = $div({id: 'resizers'}, [
           $div({className: 'top left', onmousedown: shifter.onMouseDown}),
           $div({className: 'top right', onmousedown: shifter.onMouseDown}),
           $div({className: 'bottom right', onmousedown: shifter.onMouseDown}),
           $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
         ]));
-    if (!isShared) {
-      frame.src = calcSrc(id, time);
-    } else {
-      app.sendCmd('findId', id).then(foundId => {
-        if (foundId) {
-          frame.src = calcSrc(foundId, time);
-        } else {
-          cssAppend(STYLES.error, thisStyle);
-        }
-      });
+    dom.actor.onload = () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3);
+    try {
+      if (isShared)
+        id = await app.sendCmd('findId', id);
+      if (!id)
+        throw 0;
+      await calcSrc(id, time, dom.actor);
+    } catch (e) {
+      cssAppend(STYLES.error, thisStyle);
     }
+  }
+
+  function createDomVideo() {
+    return $create('video', {
+      autoplay: true,
+      controls: true,
+      volume: app.config.volume,
+    });
+  }
+
+  function createDomFrame() {
+    return $create('iframe', {
+      allowFullscreen: true,
+      sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
+    });
   }
 
   function calcCenterPos() {
@@ -345,15 +364,66 @@
     return Math.round(width / ASPECT_RATIO);
   }
 
-  function calcSrc(id, time) {
+  async function calcSrc(id, time, el) {
     const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
-    return `https://www.youtube.com/embed/${id}?${
+    const start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
+    if (app.config.native)
+      el = await calcVideoSrc(await app.sendCmd('getVideoInfo', id), el, start);
+    if (el)
+      calcFrameSrc(el, id, start);
+  }
+
+  function calcVideoSrc({streamingData}, el, start) {
+    return new Promise(async resolve => {
+      const fmts = (streamingData.formats || streamingData.adaptiveFormats)
+        .sort((a, b) => b.width - a.width || b.height - a.height);
+      for (const f of fmts) {
+        const codec = f.mimeType.match(/codecs="([^.]+)|$/)[1] || '';
+        const type = f.mimeType.split(/[/;]/)[1];
+        let src = f.url;
+        if (!src && f.cipher) {
+          const sp = {};
+          for (const str of f.cipher.split('&')) {
+            const [k, v] = str.split('=');
+            sp[k] = v;
+          }
+          src = decodeURIComponent(sp.url);
+          if (sp.s) src += `&${sp.sp || 'sig'}=${decodeYoutubeSignature(sp.s)}`;
+        }
+        el.appendChild($create('source', {
+          src,
+          title: [
+            f.quality,
+            f.qualityLabel !== f.quality ? f.qualityLabel : '',
+            type + (codec ? `:${codec}` : ''),
+          ].filter(Boolean).join(', '),
+          onerror() {
+            const frame = createDomFrame();
+            frame.onload = el.onload;
+            el.replaceWith(frame);
+            resolve(frame);
+          },
+        }));
+        el.currentTime = start;
+        el.oncanplay = () => resolve();
+        try {
+          await el.play();
+          if (el.paused) throw 0;
+        } catch (e) {
+          el.muted = true;
+          await el.play();
+        }
+      }
+    });
+  }
+
+  function calcFrameSrc(el, id, start) {
+    el.src = `https://www.youtube.com/embed/${id}?${
       new URLSearchParams({
+        start,
         fs: 1,
         autoplay: 1,
         enablejsapi: 1,
-        // time may be |null| so we can't use a default parameter value
-        start: (s | 0) + (m | 0) * 60 + (h | 0) * 3600,
       })
     }`;
   }
@@ -421,5 +491,21 @@
   function cssProps(props, style) {
     for (const [name, value] of Object.entries(props))
       style.setProperty(name, value, 'important');
+  }
+
+  function decodeYoutubeSignature(s) {
+    const a = s.split('');
+    a.reverse();
+    swap(a, 24);
+    a.reverse();
+    swap(a, 41);
+    a.reverse();
+    swap(a, 2);
+    return a.join('');
+    function swap(a, b) {
+      const c = a[0];
+      a[0] = a[b % a.length];
+      a[b % a.length] = c;
+    }
   }
 })();

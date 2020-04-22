@@ -36,6 +36,15 @@ const commands = {
     const el = doc.querySelector('[itemprop="videoId"]');
     return el && el.content || null;
   },
+  async getVideoInfo(id) {
+    const txt = await (await fetch(`https://www.youtube.com/get_video_info?${new URLSearchParams({
+      el: 'embedded',
+      hl: 'en_US',
+      html5: 1,
+      video_id: id,
+    })}`)).text();
+    return JSON.parse(decodeURIComponent(txt.match(/(^|&)player_response=([^&]*)/)[2]));
+  },
 };
 
 chrome.runtime.onMessage.addListener(({cmd, args}, sender, sendResponse) => {

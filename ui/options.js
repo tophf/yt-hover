@@ -29,6 +29,7 @@ chrome.storage.sync.get(DEFAULTS, prefs => {
   prefs.delay = isNaN(prefs.delay) ? DEFAULTS.delay : prefs.delay / 1000;
   for (const [k, v] of Object.entries(prefs)) {
     const el = document.getElementById(k);
-    el[valueProp(el)] = k === 'history' ? chrome.history && v : v;
+    if (el)
+      el[valueProp(el)] = k === 'history' ? chrome.history && v : v;
   }
 });
