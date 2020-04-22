@@ -26,17 +26,14 @@
     "all_frames": true,
     "match_about_blank": true
   }],
-  "homepage_url": "http://add0n.com/youtube-hover.html",
   "icons": {
     "16": "ui/icon/16.png",
     "32": "ui/icon/32.png",
     "48": "ui/icon/48.png",
-    "128": "ui/icon/128.png"
+    "64": "ui/icon/48.png",
+    "128": "ui/icon/128.png",
+    "256": "ui/icon/128.png"
   },
-  "web_accessible_resources": [
-    "ui/img/*.gif",
-    "ui/img/*.svg"
-  ],
   "options_ui": {
     "page": "ui/options.html",
     "chrome_style": false

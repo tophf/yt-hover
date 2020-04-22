@@ -1,10 +1,4 @@
-/*
-global config
-global hover
-global player
-global onOff
-global sendCmd
-*/
+/* global app */
 'use strict';
 
 (() => {
@@ -12,19 +6,19 @@ global sendCmd
   const MIN_WIDTH = 200;
   const BORDER_WIDTH = '4px';
   const STYLES = {
-    main: /*language=CSS*/ cssImportant(`
+    //language=CSS
+    main: `
       :host {
         all: initial;
         border: ${BORDER_WIDTH} solid #3338;
         box-sizing: content-box;
         background: transparent center center no-repeat;
-        background-image: url("${chrome.runtime.getURL('ui/img/loader.gif')}");
         z-index: 2147483647;
         cursor: move;
         opacity: 0;
         transition: opacity .25s;
       }
-    `) + `
+    ` + `
       iframe {
         width: 100%;
         height: 100%;
@@ -67,30 +61,34 @@ global sendCmd
         cursor: sw-resize;
       }
     `,
-    cursor: ':host { cursor: % !important }',
-    dark: /*language=CSS*/ cssImportant(`
+    cursor: ':host { cursor: %; }',
+    //language=CSS
+    dark: `
       :host {
         box-shadow: 0 0 0 90000px #000;
         border-color: transparent;
       }
-    `),
-    error: /*language=CSS*/ cssImportant(`
+    `,
+    //language=CSS
+    error: `
       :host {
-        background-image: url("${chrome.runtime.getURL('ui/img/error.svg')}");
-        background-size: 128px;
+        background: darkred;
       }
-    `),
-    fadein: /*language=CSS*/ cssImportant(`
+    `,
+    //language=CSS
+    fadein: `
       :host {
         opacity: 1;
       }
-    `),
-    loaded: /*language=CSS*/ cssImportant(`
+    `,
+    //language=CSS
+    loaded: `
       :host {
         background-image: none;
       }
-    `),
-    fence: /*language=CSS*/ cssImportant(`
+    `,
+    //language=CSS
+    fence: `
       :host {
         all: initial;
         position: fixed;
@@ -103,8 +101,12 @@ global sendCmd
         -moz-user-select: none;
         /*cursor*/;
       }
-    `),
+    `,
   };
+  for (const k in STYLES)
+    STYLES[k] = cssImportant(STYLES[k]);
+
+  const {app} = window;
 
   let dom = {
     /** @type HTMLElement */
@@ -125,7 +127,7 @@ global sendCmd
     onMouseDown(e) {
       shifter.consume(e);
       const data = (e || shifter).target === dom.player ? shifter.move : shifter.resize;
-      const method = onOff(e);
+      const method = app.onOff(e);
       document[method]('mousemove', data.handler);
       document[method]('mouseup', shifter.onMouseUp);
       document[method]('selectionchange', shifter.onSelection);
@@ -221,8 +223,8 @@ global sendCmd
         const {resize} = shifter;
         resize.style = cssAppend(cssImportant(/*language=CSS*/ `
           :host {
-            width: ${resize.x = config.width}px;
-            height: ${resize.y = calcHeight(config.width)}px;
+            width: ${resize.x = app.config.width}px;
+            height: ${resize.y = calcHeight(app.config.width)}px;
           }`));
       },
       to(w, h) {
@@ -234,7 +236,7 @@ global sendCmd
     },
   };
 
-  window.player = {
+  app.player = {
     get element() {
       return dom.player;
     },
@@ -246,8 +248,8 @@ global sendCmd
      * @param {string} opts.time
      */
     create(opts) {
-      if (config.strike) strikeLinks(opts.link);
-      if (config.history) sendCmd('addToHistory', opts.link.href);
+      if (app.config.strike) strikeLinks(opts.link);
+      if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
       createDom(opts);
       document.body.appendChild(dom.player);
       setTimeout(() => cssAppend(STYLES.fadein), 250);
@@ -257,7 +259,7 @@ global sendCmd
     },
     remove() {
       setHoverCancelers(false);
-      hover.stopTimer();
+      app.hover.stopTimer();
       if (dom.player) {
         if (shifter.target) shifter.stop();
         dom.player.remove();
@@ -273,8 +275,8 @@ global sendCmd
       .append(
         dom.style = thisStyle = $create('style',
           STYLES.main +
-          (config.dark ? STYLES.dark : '') +
-          cssImportant(config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
+          (app.config.dark ? STYLES.dark : '') +
+          cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
         frame = $create('iframe', {
           allowFullscreen: true,
           sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
@@ -289,7 +291,7 @@ global sendCmd
     if (!isShared) {
       frame.src = calcSrc(id, time);
     } else {
-      sendCmd('findId', id).then(foundId => {
+      app.sendCmd('findId', id).then(foundId => {
         if (foundId) {
           frame.src = calcSrc(foundId, time);
         } else {
@@ -303,20 +305,20 @@ global sendCmd
     return /*language=CSS*/ `
     :host {
       position: fixed;
-      left: calc(50% - ${config.width / 2 - config['center-x']}px);
-      top: calc(50% - ${config.width / ASPECT_RATIO / 2 - config['center-y']}px);
+      left: calc(50% - ${app.config.width / 2 - app.config['center-x']}px);
+      top: calc(50% - ${app.config.width / ASPECT_RATIO / 2 - app.config['center-y']}px);
     }`;
   }
 
   function calcRelativePos(link) {
     const rect = link.getBoundingClientRect();
-    const w = config.width;
+    const w = app.config.width;
     const h = w / ASPECT_RATIO;
     const se = document.scrollingElement || document.body;
     const maxLeft = scrollX + innerWidth - w - 10 - (se.scrollHeight > innerHeight ? 30 : 0);
-    const left = Math.max(0, Math.min(maxLeft, rect.left + scrollX + config['relative-x']));
-    const top = Math.max(0, rect.bottom + scrollY + config['relative-y']);
-    if (config.scroll) {
+    const left = Math.max(0, Math.min(maxLeft, rect.left + scrollX + app.config['relative-x']));
+    const top = Math.max(0, rect.bottom + scrollY + app.config['relative-y']);
+    if (app.config.scroll) {
       const revealX = left < scrollX || left + w > innerWidth + scrollX;
       const revealTop = top < scrollY;
       const revealBottom = top + h > innerHeight + scrollY;
@@ -327,7 +329,7 @@ global sendCmd
             revealTop ? top - 10 :
               revealBottom ? top + h - innerHeight + 10 :
                 scrollY),
-          behavior: config.smooth ? 'smooth' : 'auto',
+          behavior: app.config.smooth ? 'smooth' : 'auto',
         });
       }
     }
@@ -363,15 +365,15 @@ global sendCmd
       if (shifter.target) {
         shifter.stop();
       } else {
-        player.remove();
+        app.player.remove();
       }
     }
   }
 
   function setHoverCancelers(enable) {
-    const method = onOff(enable);
+    const method = app.onOff(enable);
     if (dom.player || !enable) {
-      document[method]('click', hover.onclick);
+      document[method]('click', app.hover.onclick);
       document[method]('keydown', onkeydown);
     }
   }

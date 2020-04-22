@@ -1,14 +1,9 @@
-/*
-global DEFAULTS
-global config
-global hover
-global player
-global onOff
-global sendCmd
-*/
+/* global DEFAULTS */
 'use strict';
 
 window.INJECTED !== 1 && (() => {
+  window.INJECTED = 1;
+
   const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//youtu.be/"]';
   const isYoutubePage = location.hostname === 'www.youtube.com';
 
@@ -32,22 +27,24 @@ window.INJECTED !== 1 && (() => {
   /** @type Element */
   let hoverTarget = null;
 
-  Object.assign(window, {
-    INJECTED: 1,
-    config: {...window.DEFAULTS},
+  const app = window.app = {
+    config: {...DEFAULTS},
     hover: {
       /** @param {MouseEvent} e */
       onclick(e) {
         if (e.type === 'click' ||
             e.button === 2 && hoverTarget && withinBounds(hoverTarget, e.target)) {
           stopTimer();
-          if (e.target !== player.element)
-            player.remove(e);
+          if (e.target !== app.player.element)
+            app.player.remove(e);
         }
       },
       stopTimer,
     },
     onOff: on => on ? 'addEventListener' : 'removeEventListener',
+    player: {
+      remove: () => {},
+    },
     sendCmd(cmd, ...args) {
       return new Promise((resolve, reject) =>
         chrome.runtime.sendMessage({cmd, args}, r =>
@@ -55,12 +52,7 @@ window.INJECTED !== 1 && (() => {
             reject(chrome.runtime.lastError.message || r.error) :
             resolve(r.data)));
     },
-  });
-  Object.defineProperty(window, 'player', {
-    configurable: true,
-    writable: true,
-    value: {remove: () => {}},
-  });
+  };
 
   const isAnchor = el =>
     el.localName === 'a';
@@ -83,9 +75,9 @@ window.INJECTED !== 1 && (() => {
 
   chrome.storage.onChanged.addListener(onStorageChanged);
 
-  chrome.storage.local.get(config, prefs => {
-    window.config = {...DEFAULTS, ...prefs};
-    if (isYoutubePage && (!config.youtube || top !== window))
+  chrome.storage.local.get(app.config, prefs => {
+    app.config = {...DEFAULTS, ...prefs};
+    if (isYoutubePage && (!app.config.youtube || top !== window))
       return;
     setHoverListener(true);
   });
@@ -96,25 +88,25 @@ window.INJECTED !== 1 && (() => {
   }
 
   function setHoverListener(on) {
-    document[onOff(on)]('mouseover', onMouseOver, on ? {passive: true} : undefined);
+    document[app.onOff(on)]('mouseover', onMouseOver, on ? {passive: true} : undefined);
   }
 
   function onStorageChanged(prefs) {
     Object.keys(prefs).forEach(name => {
-      config[name] = prefs[name].newValue;
+      app.config[name] = prefs[name].newValue;
     });
-    if (isYoutubePage && prefs.youtube && !!prefs.youtube.oldValue !== !!config.youtube)
-      setHoverListener(config.youtube);
+    if (isYoutubePage && prefs.youtube && !!prefs.youtube.oldValue !== !!app.config.youtube)
+      setHoverListener(app.config.youtube);
   }
 
   /** @param {MouseEvent} e */
   function onMouseOver(e) {
     if (timer) {
       removeEventListener('mousemove', onMouseMove);
-      removeEventListener('auxclick', hover.onclick);
+      removeEventListener('auxclick', app.hover.onclick);
       stopTimer();
     }
-    if (player.element)
+    if (app.player.element)
       return;
     const {target} = e;
     const numBad = badBubblePath.indexOf(target) + 1;
@@ -126,13 +118,13 @@ window.INJECTED !== 1 && (() => {
       badBubblePath = path.slice(1);
       if (a && processLink(a)) {
         lastLink = a;
-        hover.x = e.pageX;
-        hover.y = e.pageY;
+        app.hover.x = e.pageX;
+        app.hover.y = e.pageY;
         hoverTarget = e.target;
         hoverFocus = document.hasFocus();
         hoverUrl = location.href;
         addEventListener('mousemove', onMouseMove, {passive: true});
-        addEventListener('auxclick', hover.onclick);
+        addEventListener('auxclick', app.hover.onclick);
       }
     }
 
@@ -185,7 +177,7 @@ window.INJECTED !== 1 && (() => {
 
   function startTimer(opts) {
     hoverDistance = 0;
-    timer = setTimeout(onTimer, config.delay, opts);
+    timer = setTimeout(onTimer, app.config.delay, opts);
   }
 
   function stopTimer() {
@@ -193,8 +185,8 @@ window.INJECTED !== 1 && (() => {
     timer = 0;
   }
 
-  function onTimer(opts) {
-    if (hoverDistance > config.maxMovement) {
+  async function onTimer(opts) {
+    if (hoverDistance > app.config.maxMovement) {
       startTimer(opts);
       return;
     }
@@ -204,8 +196,9 @@ window.INJECTED !== 1 && (() => {
         hoverTarget.matches(':hover') &&
         opts.link.matches(':hover') &&
         hoverUrl === location.href) {
-      Promise.resolve(player.create || sendCmd('injectPlayer'))
-        .then(() => player.create(opts));
+      if (!app.player.create)
+        await app.sendCmd('injectPlayer');
+      app.player.create(opts);
     }
   }
 
@@ -226,8 +219,8 @@ window.INJECTED !== 1 && (() => {
     if (observer) observer.disconnect();
     removeEventListener(selfEvent, selfDestruct);
     removeEventListener('mousemove', onMouseMove);
-    removeEventListener('auxclick', hover.onclick);
+    removeEventListener('auxclick', app.hover.onclick);
     setHoverListener(false);
-    player.remove();
+    app.player.remove();
   }
 })();
