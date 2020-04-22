@@ -37,13 +37,13 @@ const commands = {
     return el && el.content || null;
   },
   async getVideoInfo(id) {
-    const txt = await (await fetch(`https://www.youtube.com/get_video_info?${new URLSearchParams({
+    const text = await (await fetch(`https://www.youtube.com/get_video_info?${new URLSearchParams({
       el: 'embedded',
       hl: 'en_US',
       html5: 1,
       video_id: id,
     })}`)).text();
-    return JSON.parse(decodeURIComponent(txt.match(/(^|&)player_response=([^&]*)/)[2]));
+    return JSON.parse(decodeURIComponent(text.match(/(^|&)player_response=([^&]*)/)[2]));
   },
 };
 
@@ -52,8 +52,7 @@ chrome.runtime.onMessage.addListener(({cmd, args}, sender, sendResponse) => {
     const fn = commands[cmd];
     const res = fn && fn.apply(sender, args);
     if (res && typeof res.then === 'function') {
-      res.then(data => ({data}), error => ({error}))
-        .then(sendResponse);
+      res.then(data => ({data}), error => ({error})).then(sendResponse);
       return true;
     }
     sendResponse({data: res === undefined ? null : res});
@@ -66,6 +65,6 @@ function exec(...args) {
   return new Promise((resolve, reject) =>
     chrome.tabs.executeScript(...args, () =>
       chrome.runtime.lastError
-        ? reject(chrome.runtime.lastError)
+        ? reject(chrome.runtime.lastError.message)
         : resolve()));
 }

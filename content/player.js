@@ -131,7 +131,7 @@
     onMouseDown(e) {
       shifter.consume(e);
       const data = (e || shifter).target === dom.player ? shifter.move : shifter.resize;
-      const method = app.onOff(e);
+      const method = `${e ? 'add' : 'remove'}EventListener`;
       document[method]('mousemove', data.handler);
       document[method]('mouseup', shifter.onMouseUp);
       document[method]('selectionchange', shifter.onSelection);
@@ -449,7 +449,7 @@
   }
 
   function setHoverCancelers(enable) {
-    const method = app.onOff(enable);
+    const method = `${enable ? 'add' : 'remove'}EventListener`;
     if (dom.player || !enable) {
       document[method]('click', app.hover.onclick);
       document[method]('keydown', onkeydown);

@@ -41,7 +41,6 @@ window.INJECTED !== 1 && (() => {
       },
       stopTimer,
     },
-    onOff: on => on ? 'addEventListener' : 'removeEventListener',
     player: {
       remove: () => {},
     },
@@ -49,7 +48,7 @@ window.INJECTED !== 1 && (() => {
       return new Promise((resolve, reject) =>
         chrome.runtime.sendMessage({cmd, args}, r =>
           chrome.runtime.lastError || 'error' in r ?
-            reject(chrome.runtime.lastError.message || r.error) :
+            reject((chrome.runtime.lastError || 0).message || r.error) :
             resolve(r.data)));
     },
   };
@@ -88,7 +87,8 @@ window.INJECTED !== 1 && (() => {
   }
 
   function setHoverListener(on) {
-    document[app.onOff(on)]('mouseover', onMouseOver, on ? {passive: true} : undefined);
+    document[`${on ? 'add' : 'remove'}EventListener`](
+      'mouseover', onMouseOver, on ? {passive: true} : undefined);
   }
 
   function onStorageChanged(prefs) {
