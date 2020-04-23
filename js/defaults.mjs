@@ -1,6 +1,4 @@
-'use strict';
-
-window.DEFAULTS = {
+export default {
   'center-x': 0,
   'center-y': 0,
   'dark': false,

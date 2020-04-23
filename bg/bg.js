@@ -1,22 +1,8 @@
 'use strict';
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.tabs.query({url: '*://*/*'}, tabs => {
-    const code = {code: 'window.INJECTED === 1'};
-    const cs = chrome.runtime.getManifest().content_scripts[0];
-    const opts = {
-      allFrames: cs.all_frames,
-      matchAboutBlank: cs.match_about_blank,
-    };
-    for (const tab of tabs) {
-      chrome.tabs.executeScript(tab.id, code, result => {
-        if (!chrome.runtime.lastError && !result[0]) {
-          for (const file of cs.js)
-            chrome.tabs.executeScript(tab.id, {file, ...opts});
-        }
-      });
-    }
-  });
+  document.body.appendChild(document.createElement('script'))
+    .src = '/bg/bg-install.js';
 });
 
 const commands = {

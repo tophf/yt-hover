@@ -4,7 +4,7 @@ Fully reworked internally with a couple of minor features added.
 
 * Draggable and resizable preview. Click-and-drag the border or the corners to move/resize. The position/size is changed only for this preview. To set the global size, open the options UI from the toolbar icon menu.
 
-* Mouse movement threshold. Helps avoiding unwanted activation while you interact with the page, link, or a thumbnail. Hold the mouse still for the configured duration to activate the preview. 
+* Mouse movement threshold. Helps avoiding unwanted activation while you interact with the page, link, or a thumbnail. Hold the mouse still for the configured duration to activate the preview.
 
 * Native browser player (up to 720p when audio is present)
 
@@ -29,4 +29,4 @@ Chrome allows you to easily limit the extension so it can access only a few site
 * click "On specific sites" and enter the URL you want to allow
 * to add more sites either a) click "Add a new page" and type/paste the URL or b) simply visit a page and click the extension icon, then confirm the site name in "This can read and change site data" sub-menu:
 
-  ![permissions-add](https://i.imgur.com/mZE2lYi.png) 
+  ![permissions-add](https://i.imgur.com/mZE2lYi.png)

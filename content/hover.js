@@ -1,4 +1,3 @@
-/* global DEFAULTS */
 'use strict';
 
 window.INJECTED !== 1 && (() => {
@@ -28,7 +27,7 @@ window.INJECTED !== 1 && (() => {
   let hoverTarget = null;
 
   const app = window.app = {
-    config: {...DEFAULTS},
+    config: {},
     hover: {
       /** @param {MouseEvent} e */
       onclick(e) {
@@ -74,11 +73,11 @@ window.INJECTED !== 1 && (() => {
 
   chrome.storage.onChanged.addListener(onStorageChanged);
 
-  chrome.storage.sync.get(app.config, prefs => {
-    app.config = {...DEFAULTS, ...prefs};
-    if (isYoutubePage && (!app.config.youtube || top !== window))
-      return;
-    setHoverListener(true);
+  chrome.storage.sync.get(prefs => {
+    app.config = prefs;
+    if (!isYoutubePage ||
+        app.config.youtube && top === window)
+      setHoverListener(true);
   });
 
   function onMutation() {

@@ -22,7 +22,7 @@
   "content_scripts": [{
     "matches": ["*://*/*"],
     "exclude_matches": ["https://www.youtube.com/embed/*"],
-    "js": ["sharedjs/defaults.js", "content/hover.js"],
+    "js": ["content/hover.js"],
     "all_frames": true,
     "match_about_blank": true
   }],
