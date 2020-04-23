@@ -30,9 +30,9 @@
     "16": "ui/icon/16.png",
     "32": "ui/icon/32.png",
     "48": "ui/icon/48.png",
-    "64": "ui/icon/48.png",
+    "64": "ui/icon/64.png",
     "128": "ui/icon/128.png",
-    "256": "ui/icon/128.png"
+    "256": "ui/icon/256.png"
   },
   "options_ui": {
     "page": "ui/options.html",
