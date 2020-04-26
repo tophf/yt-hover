@@ -304,6 +304,7 @@
         throw 0;
       await calcSrc(id, time, dom.actor);
     } catch (e) {
+      console.error(e);
       cssAppend(STYLES.error, thisStyle);
     }
     if (isAsync)
@@ -384,6 +385,17 @@
       calcFrameSrc(el, id, start);
   }
 
+  function calcFrameSrc(el, id, start) {
+    el.src = `https://www.youtube.com/embed/${id}?${
+      new URLSearchParams({
+        start,
+        fs: 1,
+        autoplay: 1,
+        enablejsapi: 1,
+      })
+    }`;
+  }
+
   function calcVideoSrc(data, el, start) {
     return new Promise(async resolve => {
       const fmts = (data.formats || data.adaptiveFormats)
@@ -421,17 +433,6 @@
         }
       }
     });
-  }
-
-  function calcFrameSrc(el, id, start) {
-    el.src = `https://www.youtube.com/embed/${id}?${
-      new URLSearchParams({
-        start,
-        fs: 1,
-        autoplay: 1,
-        enablejsapi: 1,
-      })
-    }`;
   }
 
   function fallbackToFrame(el) {
@@ -490,10 +491,13 @@
     return str.replace(/;\s*/g, '!important;');
   }
 
-  function cssAppend(rule, {sheet} = dom.style) {
+  function cssAppend(rule, elStyle = dom.style) {
+    const {sheet} = elStyle || 0;
     if (sheet) {
       const i = sheet.insertRule(rule, sheet.cssRules.length);
       return Object.assign(sheet.cssRules[i].style, {_ruleIndex: i});
+    } else if (elStyle) {
+      elStyle.textContent += rule;
     }
   }
 
