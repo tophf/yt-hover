@@ -375,15 +375,18 @@
   async function calcSrc(id, time, el) {
     const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
     const start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
-    if (app.config.native)
-      el = await calcVideoSrc(await app.sendCmd('getVideoInfo', id), el, start);
+    if (app.config.native) {
+      const info = await app.sendCmd('getVideoInfo', id);
+      const data = info && info.streamingData;
+      el = data ? await calcVideoSrc(data, el, start) : fallbackToFrame(el);
+    }
     if (el)
       calcFrameSrc(el, id, start);
   }
 
-  function calcVideoSrc({streamingData}, el, start) {
+  function calcVideoSrc(data, el, start) {
     return new Promise(async resolve => {
-      const fmts = (streamingData.formats || streamingData.adaptiveFormats)
+      const fmts = (data.formats || data.adaptiveFormats)
         .sort((a, b) => b.width - a.width || b.height - a.height);
       for (const f of fmts) {
         const codec = f.mimeType.match(/codecs="([^.]+)|$/)[1] || '';
@@ -405,12 +408,7 @@
             f.qualityLabel !== f.quality ? f.qualityLabel : '',
             type + (codec ? `:${codec}` : ''),
           ].filter(Boolean).join(', '),
-          onerror() {
-            const frame = createDomFrame();
-            frame.onload = el.onload;
-            el.replaceWith(frame);
-            resolve(frame);
-          },
+          onerror: () => resolve(fallbackToFrame(el)),
         }));
         el.currentTime = start;
         el.oncanplay = () => resolve();
@@ -434,6 +432,13 @@
         enablejsapi: 1,
       })
     }`;
+  }
+
+  function fallbackToFrame(el) {
+    const frame = createDomFrame();
+    frame.onload = el.onload;
+    el.replaceWith(frame);
+    return frame;
   }
 
   /** @param {KeyboardEvent} e */
