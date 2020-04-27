@@ -20,14 +20,8 @@ const commands = {
     const el = doc.querySelector('[itemprop="videoId"]');
     return el && el.content || null;
   },
-  async getVideoInfo(id) {
-    const text = await (await fetch(`https://www.youtube.com/get_video_info?${new URLSearchParams({
-      el: 'embedded',
-      hl: 'en_US',
-      html5: 1,
-      video_id: id,
-    })}`)).text();
-    return JSON.parse(decodeURIComponent(text.match(/(^|&)player_response=([^&]*)/)[2]));
+  async getVideoInfo() {
+    return (await import('/bg/bg-get-video-info.mjs')).getVideoInfo.apply(this, arguments);
   },
 };
 

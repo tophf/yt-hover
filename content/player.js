@@ -373,20 +373,15 @@
     return Math.round(width / ASPECT_RATIO);
   }
 
-  async function calcSrc(id, time, el) {
+  async function calcSrc(id, time) {
     const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
     const start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
     if (app.config.native) {
-      const info = await app.sendCmd('getVideoInfo', id);
-      const data = info && info.streamingData;
-      el = data ? await calcVideoSrc(data, el, start) : fallbackToFrame(el);
+      if (await calcVideoSrc(id, start))
+        return;
+      dom.actor = Object.assign(createDomFrame(), {onload: dom.actor.onload});
     }
-    if (el)
-      calcFrameSrc(el, id, start);
-  }
-
-  function calcFrameSrc(el, id, start) {
-    el.src = `https://www.youtube.com/embed/${id}?${
+    dom.actor.src = `https://www.youtube.com/embed/${id}?${
       new URLSearchParams({
         start,
         fs: 1,
@@ -396,50 +391,21 @@
     }`;
   }
 
-  function calcVideoSrc(data, el, start) {
+  function calcVideoSrc(id, start) {
     return new Promise(async resolve => {
-      const fmts = (data.formats || data.adaptiveFormats)
-        .sort((a, b) => b.width - a.width || b.height - a.height);
-      for (const f of fmts) {
-        const codec = f.mimeType.match(/codecs="([^.]+)|$/)[1] || '';
-        const type = f.mimeType.split(/[/;]/)[1];
-        let src = f.url;
-        if (!src && f.cipher) {
-          const sp = {};
-          for (const str of f.cipher.split('&')) {
-            const [k, v] = str.split('=');
-            sp[k] = v;
-          }
-          src = decodeURIComponent(sp.url);
-          if (sp.s) src += `&${sp.sp || 'sig'}=${decodeYoutubeSignature(sp.s)}`;
-        }
-        el.appendChild($create('source', {
-          src,
-          title: [
-            f.quality,
-            f.qualityLabel !== f.quality ? f.qualityLabel : '',
-            type + (codec ? `:${codec}` : ''),
-          ].filter(Boolean).join(', '),
-          onerror: () => resolve(fallbackToFrame(el)),
-        }));
+      const el = dom.actor;
+      const data = await app.sendCmd('getVideoInfo', id);
+      const timer = setTimeout(resolve, 5000, false);
+      el.append(...data.map(item => $create('source', item)));
+      el.oncanplay = () => {
+        resolve(true);
+        clearTimeout(timer);
+        // setTimeout(() => el.play(), 100);
+      };
+      el.onerror = () => resolve(false);
+      if (start)
         el.currentTime = start;
-        el.oncanplay = () => resolve();
-        try {
-          await el.play();
-          if (el.paused) throw 0;
-        } catch (e) {
-          el.muted = true;
-          await el.play();
-        }
-      }
     });
-  }
-
-  function fallbackToFrame(el) {
-    const frame = createDomFrame();
-    frame.onload = el.onload;
-    el.replaceWith(frame);
-    return frame;
   }
 
   /** @param {KeyboardEvent} e */
@@ -508,22 +474,6 @@
   function cssProps(props, style) {
     for (const [name, value] of Object.entries(props))
       style.setProperty(name, value, 'important');
-  }
-
-  function decodeYoutubeSignature(s) {
-    const a = s.split('');
-    a.reverse();
-    swap(a, 24);
-    a.reverse();
-    swap(a, 41);
-    a.reverse();
-    swap(a, 2);
-    return a.join('');
-    function swap(a, b) {
-      const c = a[0];
-      a[0] = a[b % a.length];
-      a[b % a.length] = c;
-    }
   }
 
   function showProgress({style, style: {cursor}}) {
