@@ -1,9 +1,7 @@
 'use strict';
 
-chrome.runtime.onInstalled.addListener(() => {
-  document.body.appendChild(document.createElement('script'))
-    .src = '/bg/bg-install.js';
-});
+chrome.runtime.onInstalled.addListener(() =>
+  import('/bg/bg-install.mjs'));
 
 const commands = {
   addToHistory(url) {

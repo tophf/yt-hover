@@ -1,5 +1,3 @@
-'use strict';
-
 updateStorage()
   .then(injectTabs);
 
