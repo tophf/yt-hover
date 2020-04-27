@@ -283,20 +283,19 @@
 
   async function createDom({id, link, start, isNative, isShared}) {
     let thisStyle;
-    (dom.player = $div({onmousedown: shifter.onMouseDown}))
-      .attachShadow({mode: 'closed'})
-      .append(
-        dom.style = thisStyle = $create('style',
-          STYLES.main +
-          (app.config.dark ? STYLES.dark : '') +
-          cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
-        dom.actor = isNative ? createDomVideo() : createDomFrame(),
-        dom.resizers = $div({id: 'resizers'}, [
-          $div({className: 'top left', onmousedown: shifter.onMouseDown}),
-          $div({className: 'top right', onmousedown: shifter.onMouseDown}),
-          $div({className: 'bottom right', onmousedown: shifter.onMouseDown}),
-          $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
-        ]));
+    dom.player = $div({onmousedown: shifter.onMouseDown});
+    dom.player.attachShadow({mode: 'closed'}).append(
+      dom.style = thisStyle = $create('style',
+        STYLES.main +
+        (app.config.dark ? STYLES.dark : '') +
+        cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
+      dom.actor = isNative ? createDomVideo() : createDomFrame(),
+      dom.resizers = $div({id: 'resizers'}, [
+        $div({className: 'top left', onmousedown: shifter.onMouseDown}),
+        $div({className: 'top right', onmousedown: shifter.onMouseDown}),
+        $div({className: 'bottom right', onmousedown: shifter.onMouseDown}),
+        $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
+      ]));
     dom.actor.onload = () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3);
     const isAsync = isShared || app.config.native;
     const cursor = isAsync && showProgress(link);
@@ -336,6 +335,7 @@
     const frame = createDomFrame();
     const video = dom.actor;
     frame.onload = video.onload;
+    video.onload = video.onerror = null;
     video.replaceWith(frame);
     dom.actor = frame;
   }
@@ -357,7 +357,7 @@
       const el = dom.actor;
       const data = await app.sendCmd('getVideoInfo', id);
       await new Promise((resolve, reject) => {
-        timer = setTimeout(reject, 5000);
+        timer = setTimeout(reject, 2000);
         el.append(...data.map(item => $create('source', item)));
         el.oncanplay = () => {
           clearTimeout(timer);
