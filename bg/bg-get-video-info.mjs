@@ -16,12 +16,12 @@ export async function getVideoInfo(id) {
 function extractStream(f) {
   const codec = f.mimeType.match(/codecs="([^.]+)|$/)[1] || '';
   const type = f.mimeType.split(/[/;]/)[1];
-  const src = f.url;
+  let src = f.url;
   if (!src && f.cipher) {
     const cipher = new URLSearchParams(f.cipher);
     const s = cipher.get('s');
     const sp = s && `&${cipher.get('sp') || 'sig'}=${decodeSignature(s)}`;
-    f.url = cipher.get('url') + (sp || '');
+    src = cipher.get('url') + (sp || '');
   }
   const title = [
     f.quality,
