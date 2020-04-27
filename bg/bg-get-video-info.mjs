@@ -11,7 +11,6 @@ export async function getVideoInfo(id) {
   const fmts = (data.formats || data.adaptiveFormats)
     .sort((a, b) => b.width - a.width || b.height - a.height);
   return fmts.map(extractStream);
-
 }
 
 function extractStream(f) {

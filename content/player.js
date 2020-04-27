@@ -258,6 +258,9 @@
      * @param {string} opts.time
      */
     async create(opts) {
+      const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(opts.time) || [];
+      opts.start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
+      opts.isNative = app.config.native && !app.isYoutubePage; // doesn't work on yt site
       await createDom(opts);
       if (app.config.strike) strikeLinks(opts.link);
       if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
@@ -278,7 +281,7 @@
     },
   };
 
-  async function createDom({id, time, link, isShared}) {
+  async function createDom({id, link, start, isNative, isShared}) {
     let thisStyle;
     (dom.player = $div({onmousedown: shifter.onMouseDown}))
       .attachShadow({mode: 'closed'})
@@ -287,7 +290,7 @@
           STYLES.main +
           (app.config.dark ? STYLES.dark : '') +
           cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
-        dom.actor = app.config.native ? createDomVideo() : createDomFrame(),
+        dom.actor = isNative ? createDomVideo() : createDomFrame(),
         dom.resizers = $div({id: 'resizers'}, [
           $div({className: 'top left', onmousedown: shifter.onMouseDown}),
           $div({className: 'top right', onmousedown: shifter.onMouseDown}),
@@ -301,14 +304,40 @@
       if (isShared)
         id = await app.sendCmd('findId', id);
       if (!id)
-        throw 0;
-      await calcSrc(id, time, dom.actor);
+        throw 'Video ID not found';
+      if (isNative && await createDomVideoSource(id)) {
+        dom.actor.currentTime = start;
+      } else {
+        dom.actor.src = `https://www.youtube.com/embed/${id}?${
+          new URLSearchParams({
+            start,
+            fs: 1,
+            autoplay: 1,
+            enablejsapi: 1,
+          })
+        }`;
+      }
     } catch (e) {
       console.error(e);
       cssAppend(STYLES.error, thisStyle);
     }
     if (isAsync)
       hideProgress(link, cursor);
+  }
+
+  function createDomFrame() {
+    return $create('iframe', {
+      allowFullscreen: true,
+      sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
+    });
+  }
+
+  function createDomFrameFallback() {
+    const frame = createDomFrame();
+    const video = dom.actor;
+    frame.onload = video.onload;
+    video.replaceWith(frame);
+    dom.actor = frame;
   }
 
   function createDomVideo() {
@@ -322,11 +351,26 @@
     });
   }
 
-  function createDomFrame() {
-    return $create('iframe', {
-      allowFullscreen: true,
-      sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
-    });
+  async function createDomVideoSource(id) {
+    let timer;
+    try {
+      const el = dom.actor;
+      const data = await app.sendCmd('getVideoInfo', id);
+      await new Promise((resolve, reject) => {
+        timer = setTimeout(reject, 5000);
+        el.append(...data.map(item => $create('source', item)));
+        el.oncanplay = () => {
+          clearTimeout(timer);
+          setTimeout(() => el.play().catch(() => {}));
+          resolve();
+        };
+        el.onerror = reject;
+      });
+      return true;
+    } catch (e) {
+      clearTimeout(timer);
+      createDomFrameFallback();
+    }
   }
 
   function calcCenterPos() {
@@ -371,41 +415,6 @@
 
   function calcHeight(width) {
     return Math.round(width / ASPECT_RATIO);
-  }
-
-  async function calcSrc(id, time) {
-    const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
-    const start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
-    if (app.config.native) {
-      if (await calcVideoSrc(id, start))
-        return;
-      dom.actor = Object.assign(createDomFrame(), {onload: dom.actor.onload});
-    }
-    dom.actor.src = `https://www.youtube.com/embed/${id}?${
-      new URLSearchParams({
-        start,
-        fs: 1,
-        autoplay: 1,
-        enablejsapi: 1,
-      })
-    }`;
-  }
-
-  function calcVideoSrc(id, start) {
-    return new Promise(async resolve => {
-      const el = dom.actor;
-      const data = await app.sendCmd('getVideoInfo', id);
-      const timer = setTimeout(resolve, 5000, false);
-      el.append(...data.map(item => $create('source', item)));
-      el.oncanplay = () => {
-        resolve(true);
-        clearTimeout(timer);
-        // setTimeout(() => el.play(), 100);
-      };
-      el.onerror = () => resolve(false);
-      if (start)
-        el.currentTime = start;
-    });
   }
 
   /** @param {KeyboardEvent} e */

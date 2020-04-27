@@ -27,6 +27,7 @@ window.INJECTED !== 1 && (() => {
   let hoverTarget = null;
 
   const app = window.app = {
+    isYoutubePage,
     config: {},
     hover: {
       /** @param {MouseEvent} e */
