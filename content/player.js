@@ -159,7 +159,7 @@
       shifter.onMouseDown(false);
       shifter.target = null;
       window.addEventListener('click', shifter.consumeClick, true);
-      if (dom.actor) {
+      if (app.config.native) {
         const {clientX, clientY} = shifter.move;
         if (clientX === e.clientX &&
             clientY === e.clientY)
@@ -282,21 +282,23 @@
   };
 
   function createDom({link}) {
+    const onmousedown = shifter.onMouseDown;
     let thisStyle;
-    dom.player = $div({onmousedown: shifter.onMouseDown});
-    dom.player.attachShadow({mode: 'closed'}).append(
-      dom.style = thisStyle = $create('style',
-        STYLES.main +
-        (app.config.dark ? STYLES.dark : '') +
-        cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
-      dom.actor = app.config.native ? createDomVideo() : createDomFrame(),
-      dom.resizers = $div({id: 'resizers'}, [
-        $div({className: 'top left', onmousedown: shifter.onMouseDown}),
-        $div({className: 'top right', onmousedown: shifter.onMouseDown}),
-        $div({className: 'bottom right', onmousedown: shifter.onMouseDown}),
-        $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
-      ]));
+    dom.player = $div({onmousedown});
+    dom.style = thisStyle = $create('style',
+      STYLES.main +
+      (app.config.dark ? STYLES.dark : '') +
+      cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link)));
+    dom.actor = app.config.native ? createDomVideo() : createDomFrame();
     dom.actor.onload = () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3);
+    dom.resizers = $div({id: 'resizers'}, [
+      $div({className: 'top left', onmousedown}),
+      $div({className: 'top right', onmousedown}),
+      $div({className: 'bottom right', onmousedown}),
+      $div({className: 'bottom left', onmousedown}),
+    ]);
+    dom.player.attachShadow({mode: 'closed'})
+      .append(dom.style, dom.actor, dom.resizers);
   }
 
   function createDomFrame() {
