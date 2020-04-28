@@ -260,7 +260,6 @@
     async create(opts) {
       const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(opts.time) || [];
       opts.start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
-      opts.isNative = app.config.native && !app.isYoutubePage; // doesn't work on yt site
       await createDom(opts);
       if (app.config.strike) strikeLinks(opts.link);
       if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
@@ -281,7 +280,7 @@
     },
   };
 
-  async function createDom({id, link, start, isNative, isShared}) {
+  async function createDom({id, link, start, isShared}) {
     let thisStyle;
     dom.player = $div({onmousedown: shifter.onMouseDown});
     dom.player.attachShadow({mode: 'closed'}).append(
@@ -289,7 +288,7 @@
         STYLES.main +
         (app.config.dark ? STYLES.dark : '') +
         cssImportant(app.config.mode === 1 ? calcCenterPos() : calcRelativePos(link))),
-      dom.actor = isNative ? createDomVideo() : createDomFrame(),
+      dom.actor = app.config.native ? createDomVideo() : createDomFrame(),
       dom.resizers = $div({id: 'resizers'}, [
         $div({className: 'top left', onmousedown: shifter.onMouseDown}),
         $div({className: 'top right', onmousedown: shifter.onMouseDown}),
@@ -304,7 +303,7 @@
         id = await app.sendCmd('findId', id);
       if (!id)
         throw 'Video ID not found';
-      if (isNative && await createDomVideoSource(id)) {
+      if (app.config.native && await createDomVideoSource(id)) {
         dom.actor.currentTime = start;
       } else {
         dom.actor.src = `https://www.youtube.com/embed/${id}?${
