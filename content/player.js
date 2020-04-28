@@ -113,6 +113,8 @@
   let dom = {
     /** @type HTMLIFrameElement | HTMLVideoElement */
     actor: null,
+    /** @type string */
+    oldCursor: null,
     /** @type HTMLElement */
     player: null,
     /** @type HTMLElement */
@@ -258,16 +260,15 @@
      * @param {string} opts.time
      */
     async create(opts) {
-      const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(opts.time) || [];
-      opts.start = (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
-      await createDom(opts);
-      if (app.config.strike) strikeLinks(opts.link);
-      if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
+      createDom(opts);
+      await setSource(opts);
       document.body.appendChild(dom.player);
       setTimeout(() => cssAppend(STYLES.fadein), 250);
       shifter.move.init();
       shifter.resize.init();
       setHoverCancelers(true);
+      if (app.config.strike) strikeLinks(opts.link);
+      if (app.config.history) app.sendCmd('addToHistory', opts.link.href);
     },
     remove() {
       setHoverCancelers(false);
@@ -280,7 +281,7 @@
     },
   };
 
-  async function createDom({id, link, start, isShared}) {
+  function createDom({link}) {
     let thisStyle;
     dom.player = $div({onmousedown: shifter.onMouseDown});
     dom.player.attachShadow({mode: 'closed'}).append(
@@ -296,31 +297,6 @@
         $div({className: 'bottom left', onmousedown: shifter.onMouseDown}),
       ]));
     dom.actor.onload = () => setTimeout(() => cssAppend(STYLES.loaded, thisStyle), 10e3);
-    const isAsync = isShared || app.config.native;
-    const cursor = isAsync && showProgress(link);
-    try {
-      if (isShared)
-        id = await app.sendCmd('findId', id);
-      if (!id)
-        throw 'Video ID not found';
-      if (app.config.native && await createDomVideoSource(id)) {
-        dom.actor.currentTime = start;
-      } else {
-        dom.actor.src = `https://www.youtube.com/embed/${id}?${
-          new URLSearchParams({
-            start,
-            fs: 1,
-            autoplay: 1,
-            enablejsapi: 1,
-          })
-        }`;
-      }
-    } catch (e) {
-      console.error(e);
-      cssAppend(STYLES.error, thisStyle);
-    }
-    if (isAsync)
-      hideProgress(link, cursor);
   }
 
   function createDomFrame() {
@@ -350,7 +326,34 @@
     });
   }
 
-  async function createDomVideoSource(id) {
+  async function setSource({id, link, time, isShared}) {
+    const thisStyle = dom.style;
+    const start = calcStartTime(time);
+    const timer = setTimeout(showProgress, 0, link);
+    try {
+      if (isShared)
+        id = await app.sendCmd('findId', id);
+      if (!id)
+        throw 'Video ID not found';
+      if (app.config.native && await setNativeSource(id)) {
+        dom.actor.currentTime = start;
+      } else {
+        dom.actor.src = `https://www.youtube.com/embed/${id}?${new URLSearchParams({
+          start,
+          fs: 1,
+          autoplay: 1,
+          enablejsapi: 1,
+        })}`;
+      }
+    } catch (e) {
+      console.error(e);
+      cssAppend(STYLES.error, thisStyle);
+    }
+    clearTimeout(timer);
+    hideProgress(link);
+  }
+
+  async function setNativeSource(id) {
     let timer;
     try {
       const el = dom.actor;
@@ -410,6 +413,11 @@
       left: ${left}px;
       top: ${top}px;
     }`;
+  }
+
+  function calcStartTime(time) {
+    const [, h, m, s] = /(?:(\d+)h)?(?:(\d+)m)?(\d+)s/.exec(time) || [];
+    return (s | 0) + (m | 0) * 60 + (h | 0) * 3600;
   }
 
   function calcHeight(width) {
@@ -486,13 +494,13 @@
 
   function showProgress({style, style: {cursor}}) {
     style.setProperty('cursor', PROGRESS_CURSOR, 'important');
-    return cursor;
+    dom.oldCursor = cursor;
   }
 
-  function hideProgress(link, cursor) {
+  function hideProgress(link) {
     const {style} = link;
     if (style.cursor === PROGRESS_CURSOR)
-      style.cursor = cursor;
+      style.cursor = dom.oldCursor;
     if (!style.length)
       link.removeAttribute('style');
   }
