@@ -6,6 +6,8 @@ Fully reworked internally with a couple of minor features added.
 
 * Mouse movement threshold. Helps avoiding unwanted activation while you interact with the page, link, or a thumbnail. Hold the mouse still for the configured duration to activate the preview.
 
+* <kbd>Shift</kbd> key skips activation: press and hold the key, hover a link, release the key (or keep holding it to hover a bunch of links without activating).
+
 * Native browser player (up to 720p when audio is present)
 
 ![options](https://i.imgur.com/hqUYQrx.png)

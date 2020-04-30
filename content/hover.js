@@ -106,7 +106,7 @@ window.INJECTED !== 1 && (() => {
       removeEventListener('auxclick', app.hover.onclick);
       stopTimer();
     }
-    if (app.player.element)
+    if (app.player.element || e.shiftKey)
       return;
     const {target} = e;
     const numBad = badBubblePath.indexOf(target) + 1;
