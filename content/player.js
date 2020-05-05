@@ -312,7 +312,7 @@
     const frame = createDomFrame();
     const video = dom.actor;
     frame.onload = video.onload;
-    video.onload = video.onerror = null;
+    video.onload = video.oncanplay = video.onerror = null;
     video.replaceWith(frame);
     dom.actor = frame;
   }
