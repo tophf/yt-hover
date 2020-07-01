@@ -32,12 +32,9 @@ window.INJECTED !== 1 && (() => {
     hover: {
       /** @param {MouseEvent} e */
       onclick(e) {
-        if (e.type === 'click' ||
-            e.button === 2 && hoverTarget && withinBounds(hoverTarget, e.target)) {
-          stopTimer();
-          if (e.target !== app.player.element)
-            app.player.remove(e);
-        }
+        stopTimer();
+        if (e.button !== 2 && e.target !== app.player.element)
+          app.player.remove(e);
       },
       stopTimer,
     },
@@ -103,7 +100,7 @@ window.INJECTED !== 1 && (() => {
   function onMouseOver(e) {
     if (timer) {
       removeEventListener('mousemove', onMouseMove);
-      removeEventListener('auxclick', app.hover.onclick);
+      removeEventListener('mousedown', app.hover.onclick);
       stopTimer();
     }
     if (app.player.element || e.shiftKey)
@@ -124,7 +121,7 @@ window.INJECTED !== 1 && (() => {
         hoverFocus = document.hasFocus();
         hoverUrl = location.href;
         addEventListener('mousemove', onMouseMove, {passive: true});
-        addEventListener('auxclick', app.hover.onclick);
+        addEventListener('mousedown', app.hover.onclick);
       }
     }
 
