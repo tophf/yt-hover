@@ -2,8 +2,8 @@
   "name": "YouTube™ on Hover Preview",
   "short_name": "ihvyoutube",
   "description": "View YouTube while hovering mouse over a YouTube link on any website",
-  "author": "tophf + Jeremy Schomery",
-  "version": "1.0.2",
+  "author": "tophf",
+  "version": "1.0.3",
   "manifest_version": 2,
   "minimum_chrome_version": "61",
   "permissions": [
@@ -38,5 +38,5 @@
     "page": "ui/options.html",
     "chrome_style": false
   },
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsYQSsDr++3eggXgj7r9cxv3OOmmz+5ySI+7sRMSnsLMNpAXjD9zIHq5Ki2KQevb7sS9r3hCdFOch0j++RZAnPDpVxGheRSLNGxuLFBWPq88lOzOh5vOLctovfKuXuRL6lHr1s1Z6mytzse0em93sWS472VHlNw9RkJjfzYkw7ezvgXUU3pvLoNtpk3mGyA/0HUPn11wZl4qaktHH8fWGAl2q4Ja+1YszuaPJ+wdd6FMBrn8jwrFB0rg6KPW56GISPvghW8hz6oyIQLs0bp0uxg82mlApu2hx1EKaF6Xnd/uTLzc24c3m9xXTtKvxwMMCE33XfApPfVB2Rih2DQBlYQIDAQAB"
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzlnYsStUrE+FHz/kAeNfKMKh4uAKatEZPwn+HBU2sIt4MXRciathJ+pP/TXmPuEIBLW18aOv/na8dPXu3ba4++qYK0n6WCmd9dvbFEfiI7xjiUZMQMwgQECG+Ywh2bY31mpV/KwsxYDp626wsyATg1Jfom9gheR231nbXVUX4E51F9RZWVbaWOqH7oJ4kD+pjaDvFJNNrnMgUzlRT7U4PO01XlqMlHf355w692pF1yyrr0gaXqF2+GvI8coe+yyqLBdiOE05KtGvfZgyxTWky+j9+edSmWt9s0+UObOnV/9sOrjfnxpkGDg8pOEEap0aP4jGePEIuEeEveTNbMh6bwIDAQAB"
 }
