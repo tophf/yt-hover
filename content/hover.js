@@ -18,8 +18,8 @@ window.INJECTED !== 1 && (() => {
   let lastLink = null;
 
   let timer;
-  let hoverX = 0;
-  let hoverY = 0;
+  let hoverX = Infinity;
+  let hoverY = Infinity;
   let hoverUrl = '';
   let hoverDistance = 0;
   let hoverFocus = false;
@@ -35,6 +35,8 @@ window.INJECTED !== 1 && (() => {
         stopTimer();
         if (e.button !== 2 && e.target !== app.player.element)
           app.player.remove(e);
+        hoverX = e.pageX;
+        hoverY = e.pageY;
       },
       stopTimer,
     },
@@ -103,8 +105,12 @@ window.INJECTED !== 1 && (() => {
       removeEventListener('mousedown', app.hover.onclick);
       stopTimer();
     }
-    if (app.player.element || e.shiftKey)
+    if (app.player.element ||
+        e.shiftKey ||
+        e.pageX === hoverX && e.pageY === hoverY)
       return;
+    hoverX = e.pageX;
+    hoverY = e.pageY;
     const {target} = e;
     const numBad = badBubblePath.indexOf(target) + 1;
     if (numBad) {
@@ -115,8 +121,6 @@ window.INJECTED !== 1 && (() => {
       badBubblePath = path.slice(1);
       if (a && processLink(a)) {
         lastLink = a;
-        app.hover.x = e.pageX;
-        app.hover.y = e.pageY;
         hoverTarget = e.target;
         hoverFocus = document.hasFocus();
         hoverUrl = location.href;
@@ -199,15 +203,6 @@ window.INJECTED !== 1 && (() => {
     }
   }
 
-  function withinBounds(outer, inner) {
-    const bO = outer.getBoundingClientRect();
-    const b = inner.getBoundingClientRect();
-    return bO.left <= b.left &&
-           bO.top <= b.top &&
-           bO.right >= b.right &&
-           bO.bottom >= b.bottom;
-  }
-
   function selfDestruct() {
     try {
       // do nothing if we're still alive, probably someone tries to "hack" us
@@ -216,7 +211,6 @@ window.INJECTED !== 1 && (() => {
     if (observer) observer.disconnect();
     removeEventListener(selfEvent, selfDestruct);
     removeEventListener('mousemove', onMouseMove);
-    removeEventListener('auxclick', app.hover.onclick);
     setHoverListener(false);
     app.player.remove();
   }
