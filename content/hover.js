@@ -100,11 +100,8 @@ window.INJECTED !== 1 && (() => {
 
   /** @param {MouseEvent} e */
   function onMouseOver(e) {
-    if (timer) {
-      removeEventListener('mousemove', onMouseMove);
-      removeEventListener('mousedown', app.hover.onclick);
-      stopTimer();
-    }
+    if (timer)
+      stopAll();
     if (app.player.element ||
         e.shiftKey ||
         e.pageX === hoverX && e.pageY === hoverY)
@@ -141,7 +138,11 @@ window.INJECTED !== 1 && (() => {
   }
 
   /** @param {MouseEvent} e */
-  function onMouseMove({pageX: x, pageY: y}) {
+  function onMouseMove({target, pageX: x, pageY: y}) {
+    if (isYoutubePage && target.closest('[id*="overlay"]')) {
+      stopAll();
+      return;
+    }
     hoverDistance += Math.sqrt((x - hoverX) ** 2 + (y - hoverY) ** 2);
     hoverX = x;
     hoverY = y;
@@ -184,6 +185,12 @@ window.INJECTED !== 1 && (() => {
   function stopTimer() {
     clearTimeout(timer);
     timer = 0;
+  }
+
+  function stopAll() {
+    removeEventListener('mousemove', onMouseMove);
+    removeEventListener('mousedown', app.hover.onclick);
+    stopTimer();
   }
 
   async function onTimer(opts) {
