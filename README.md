@@ -14,7 +14,7 @@ Fully reworked internally with a couple of minor features added.
 
 ### Autoplay in Chrome
 
-Chrome has its own allegedly smart heuristics to determine when it can autoplay videos so you may need to give it some time to learn from your behavior.
+Chrome has its own allegedly smart heuristics to determine when it can autoplay videos so you may need to give it some time to learn from your behavior. It didn't work for me though so I ended up force-enabling it by manually adding a [local policy](https://chromeenterprise.google/policies/?policy=AutoplayAllowed) (note that in Chromium-based browsers the registry path is usually `Chromium` instead of `Google\Chrome`).
 
 ### Extension permissions
 
