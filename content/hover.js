@@ -139,7 +139,7 @@ window.INJECTED !== 1 && (() => {
 
   /** @param {MouseEvent} e */
   function onMouseMove({target, pageX: x, pageY: y}) {
-    if (isYoutubePage && target.closest('#overlays, #hover-overlays')) {
+    if (isYoutubePage && target.closest('a [overlay-style], a [system-icons]')) {
       stopAll();
       return;
     }
