@@ -28,6 +28,7 @@ window.INJECTED !== 1 && (() => {
 
   const app = window.app = {
     isYoutubePage,
+    /** @type YT.Config */
     config: {},
     hover: {
       /** @param {MouseEvent} e */
@@ -75,61 +76,73 @@ window.INJECTED !== 1 && (() => {
 
   chrome.storage.sync.get(prefs => {
     app.config = prefs;
-    if (!isYoutubePage ||
-        app.config.youtube && top === window)
-      setHoverListener(true);
+    toggleListener(true);
   });
 
   function onMutation() {
-    setHoverListener(true);
+    toggleListener(true);
     observer.disconnect();
   }
 
-  function setHoverListener(on) {
-    document[`${on ? 'add' : 'remove'}EventListener`](
-      'mouseover', onMouseOver, on ? {passive: true} : undefined);
+  function toggleListener(on) {
+    const onOff = `${on ? 'add' : 'remove'}EventListener`;
+    if (app.config['ctrl-key'])
+      window[onOff]('keydown', maybeStart, true);
+    else
+      window[onOff]('mouseover', maybeStart, on ? {passive: true} : undefined);
   }
 
   function onStorageChanged(prefs) {
-    Object.keys(prefs).forEach(name => {
-      app.config[name] = prefs[name].newValue;
-    });
-    if (isYoutubePage && prefs.youtube && !!prefs.youtube.oldValue !== !!app.config.youtube)
-      setHoverListener(app.config.youtube);
+    const ctrl = prefs['ctrl-key']?.newValue !== app.config['ctrl-key'];
+    if (ctrl)
+      toggleListener(false);
+    for (const [k, v] of Object.entries(prefs))
+      app.config[k] = v.newValue;
+    if (ctrl)
+      toggleListener(true);
   }
 
-  /** @param {MouseEvent} e */
-  function onMouseOver(e) {
+  /** @param {MouseEvent|KeyboardEvent} e */
+  function maybeStart(e) {
     if (timer)
       stopAll();
+    const isCtrl = e.key === 'Control' && !e.altKey && !e.shiftKey && !e.metaKey;
     if (app.player.element ||
         e.shiftKey ||
-        e.pageX === hoverX && e.pageY === hoverY)
+        e.repeat ||
+        (e.key ? !isCtrl : e.pageX === hoverX && e.pageY === hoverY))
       return;
     hoverX = e.pageX;
     hoverY = e.pageY;
-    const {target} = e;
+    const path = isCtrl ? [...document.querySelectorAll(':hover')] : e.composedPath();
+    const target = isCtrl && path[path.length - 1] || e.target;
     const numBad = badBubblePath.indexOf(target) + 1;
     if (numBad) {
       badBubblePath.splice(0, numBad);
     } else {
-      const path = e.composedPath();
       const a = isYoutubePage ? findYoutubeAnchor(target, path) : path.find(isAnchor);
+      const info = a && processLink(a);
       badBubblePath = path.slice(1);
-      if (a && processLink(a)) {
+      if (info) {
         lastLink = a;
         hoverTarget = e.target;
         hoverFocus = document.hasFocus();
         hoverUrl = location.href;
-        addEventListener('mousemove', onMouseMove, {passive: true});
-        addEventListener('mousedown', app.hover.onclick);
+        hoverDistance = 0;
+        if (e.key) {
+          onTimer(info);
+        } else {
+          startTimer(info);
+          addEventListener('mousemove', onMouseMove, {passive: true});
+          addEventListener('mousedown', app.hover.onclick);
+        }
       }
     }
 
     if (!isYoutubePage) {
       lastLink = document.contains(lastLink) ? lastLink : document.querySelector(LINK_SELECTOR);
       if (!lastLink) {
-        setHoverListener(false);
+        toggleListener(false);
         if (!observer)
           observer = new MutationObserver(onMutation);
         observer.observe(document.body, observerConfig);
@@ -171,10 +184,7 @@ window.INJECTED !== 1 && (() => {
     } else if (isShared) {
       id = params.get('ci');
     }
-    if (id) {
-      startTimer({id, isShared, link, time: params.get('t')});
-      return true;
-    }
+    return id && {id, isShared, link, time: params.get('t')};
   }
 
   function startTimer(opts) {
@@ -217,8 +227,8 @@ window.INJECTED !== 1 && (() => {
     } catch (e) {}
     if (observer) observer.disconnect();
     removeEventListener(selfEvent, selfDestruct);
-    removeEventListener('mousemove', onMouseMove);
-    setHoverListener(false);
+    stopAll();
+    toggleListener(false);
     app.player.remove();
   }
 })();

@@ -1,4 +1,6 @@
+/** @namespace YT.Config */
 export default {
+  'ctrl-key': 0,
   'center-x': 0,
   'center-y': 0,
   'dark': false,
@@ -14,5 +16,4 @@ export default {
   'strike': true,
   'volume': .5,
   'width': 500,
-  'youtube': false,
 };

@@ -5,7 +5,7 @@
   "author": "tophf",
   "version": "1.0.6",
   "manifest_version": 2,
-  "minimum_chrome_version": "61",
+  "minimum_chrome_version": "80",
   "permissions": [
     "storage",
     "<all_urls>"
@@ -34,9 +34,8 @@
     "128": "ui/icon/128.png",
     "256": "ui/icon/256.png"
   },
-  "options_ui": {
-    "page": "ui/options.html",
-    "chrome_style": false
+  "browser_action": {
+    "default_popup": "ui/options.html"
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzlnYsStUrE+FHz/kAeNfKMKh4uAKatEZPwn+HBU2sIt4MXRciathJ+pP/TXmPuEIBLW18aOv/na8dPXu3ba4++qYK0n6WCmd9dvbFEfiI7xjiUZMQMwgQECG+Ywh2bY31mpV/KwsxYDp626wsyATg1Jfom9gheR231nbXVUX4E51F9RZWVbaWOqH7oJ4kD+pjaDvFJNNrnMgUzlRT7U4PO01XlqMlHf355w692pF1yyrr0gaXqF2+GvI8coe+yyqLBdiOE05KtGvfZgyxTWky+j9+edSmWt9s0+UObOnV/9sOrjfnxpkGDg8pOEEap0aP4jGePEIuEeEveTNbMh6bwIDAQAB"
 }
