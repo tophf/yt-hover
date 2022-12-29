@@ -1,4 +1,5 @@
-import DEFAULTS from '/js/defaults.mjs';
+/* global DEFAULTS */
+'use strict';
 
 const valueProp = ({type}) =>
   type === 'checkbox' ? 'checked' :

@@ -1,5 +1,8 @@
+'use strict';
+
+/* exported DEFAULTS */
 /** @namespace YT.Config */
-export default {
+var DEFAULTS = {
   'ctrl-key': 0,
   'center-x': 0,
   'center-y': 0,

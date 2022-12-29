@@ -1,48 +1,78 @@
 'use strict';
 
-chrome.runtime.onInstalled.addListener(() =>
-  import('/bg/bg-install.mjs'));
+self.oninstall = () => importScripts('bg-install.js'); /* global onInstalled */
+chrome.runtime.onInstalled.addListener(() => onInstalled());
+chrome.runtime.onMessage.addListener(onMessage);
 
-const commands = {
+const COMMANDS = {
   addToHistory(url) {
     if (!chrome.history) throw 'Please re-enable "history" checkbox in the options dialog!';
-    chrome.history.addUrl({url});
-  },
-  injectPlayer() {
-    return exec(this.tab.id, {
-      file: '/content/player.js',
-      frameId: this.frameId,
-    });
+    return chrome.history.addUrl({url});
   },
   async findId(id) {
     const text = await (await fetch(`https://www.youtube.com/shared?ci=${id}`)).text();
-    const doc = new DOMParser().parseFromString(text, 'text/html');
-    const el = doc.querySelector('[itemprop="videoId"]');
-    return el && el.content || null;
+    return text.match(/<meta\s+itemprop="videoId"\s*content="([-\w]+)"\s*>/i)?.[1] || null;
   },
-  async getVideoInfo() {
-    return (await import('/bg/bg-get-video-info.mjs')).getVideoInfo.apply(this, arguments);
+  async getVideoInfo(id) {
+    const text = await (await fetch(`https://www.youtube.com/get_video_info?${new URLSearchParams({
+      el: 'embedded',
+      hl: 'en_US',
+      html5: 1,
+      video_id: id,
+    })}`)).text();
+    const info = JSON.parse(decodeURIComponent(text.match(/(^|&)player_response=([^&]*)/)[2]));
+    const data = info.streamingData;
+    const fmts = (data.formats || data.adaptiveFormats)
+      .sort((a, b) => b.width - a.width || b.height - a.height);
+    return fmts.map(extractStream);
   },
 };
 
-chrome.runtime.onMessage.addListener(({cmd, args}, sender, sendResponse) => {
+function onMessage({cmd, args}, sender, sendResponse) {
   try {
-    const fn = commands[cmd];
+    const fn = COMMANDS[cmd];
     const res = fn && fn.apply(sender, args);
-    if (res && typeof res.then === 'function') {
-      res.then(data => ({data}), error => ({error})).then(sendResponse);
+    if (res instanceof Promise) {
+      res.then(data => sendResponse({data}), error => sendResponse({error}));
       return true;
     }
     sendResponse({data: res === undefined ? null : res});
   } catch (error) {
     sendResponse({error});
   }
-});
+}
 
-function exec(...args) {
-  return new Promise((resolve, reject) =>
-    chrome.tabs.executeScript(...args, () =>
-      chrome.runtime.lastError
-        ? reject(chrome.runtime.lastError.message)
-        : resolve()));
+function extractStream(f) {
+  const codec = f.mimeType.match(/codecs="([^.]+)|$/)[1] || '';
+  const type = f.mimeType.split(/[/;]/)[1];
+  let src = f.url;
+  if (!src && f.cipher) {
+    const cipher = new URLSearchParams(f.cipher);
+    const s = cipher.get('s');
+    const sp = s && `&${cipher.get('sp') || 'sig'}=${decodeSignature(s)}`;
+    src = cipher.get('url') + (sp || '');
+  }
+  const title = [
+    f.quality,
+    f.qualityLabel !== f.quality ? f.qualityLabel : '',
+    type + (codec ? `:${codec}` : ''),
+  ].filter(Boolean).join(', ');
+  return {src, title};
+}
+
+function decodeSignature(s) {
+  const a = s.split('');
+  a.reverse();
+  swap(a, 24);
+  a.reverse();
+  swap(a, 41);
+  a.reverse();
+  swap(a, 2);
+  return a.join('');
+}
+
+function swap(a, b) {
+  const c = a[0];
+  a[0] = a[b % a.length];
+  a[b % a.length] = c;
 }

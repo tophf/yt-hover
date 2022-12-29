@@ -3,28 +3,33 @@
   "short_name": "ihvyoutube",
   "description": "View YouTube while hovering mouse over a YouTube link on any website",
   "author": "tophf",
-  "version": "1.0.6",
-  "manifest_version": 2,
-  "minimum_chrome_version": "80",
+  "version": "1.0.8",
+  "manifest_version": 3,
+  "minimum_chrome_version": "99",
   "permissions": [
     "storage",
-    "<all_urls>"
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*/*"
   ],
   "optional_permissions": [
     "history"
   ],
   "background": {
-    "persistent": false,
-    "scripts": [
-      "bg/bg.js"
-    ]
+    "service_worker": "bg/bg.js"
   },
   "content_scripts": [{
     "matches": ["*://*/*"],
     "exclude_matches": ["https://www.youtube.com/embed/*"],
     "js": ["content/hover.js"],
     "all_frames": true,
-    "match_about_blank": true
+    "match_origin_as_fallback": true
+  }],
+  "web_accessible_resources": [{
+    "matches": ["*://*/*"],
+    "resources": ["content/player*.mjs"],
+    "use_dynamic_url": true
   }],
   "icons": {
     "16": "ui/icon/16.png",
@@ -34,7 +39,7 @@
     "128": "ui/icon/128.png",
     "256": "ui/icon/256.png"
   },
-  "browser_action": {
+  "action": {
     "default_popup": "ui/options.html"
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzlnYsStUrE+FHz/kAeNfKMKh4uAKatEZPwn+HBU2sIt4MXRciathJ+pP/TXmPuEIBLW18aOv/na8dPXu3ba4++qYK0n6WCmd9dvbFEfiI7xjiUZMQMwgQECG+Ywh2bY31mpV/KwsxYDp626wsyATg1Jfom9gheR231nbXVUX4E51F9RZWVbaWOqH7oJ4kD+pjaDvFJNNrnMgUzlRT7U4PO01XlqMlHf355w692pF1yyrr0gaXqF2+GvI8coe+yyqLBdiOE05KtGvfZgyxTWky+j9+edSmWt9s0+UObOnV/9sOrjfnxpkGDg8pOEEap0aP4jGePEIuEeEveTNbMh6bwIDAQAB"

@@ -215,7 +215,7 @@ window.INJECTED !== 1 && (() => {
         opts.link.matches(':hover') &&
         hoverUrl === location.href) {
       if (!app.player.create)
-        await app.sendCmd('injectPlayer');
+        await import(chrome.runtime.getURL('/content/player.mjs'));
       app.player.create(opts);
     }
   }
