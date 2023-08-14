@@ -18,6 +18,7 @@ window.INJECTED !== 1 && (() => {
   let lastLink = null;
 
   let timer;
+  let hotkey;
   let hoverX = Infinity;
   let hoverY = Infinity;
   let hoverUrl = '';
@@ -86,19 +87,19 @@ window.INJECTED !== 1 && (() => {
 
   function toggleListener(on) {
     const onOff = `${on ? 'add' : 'remove'}EventListener`;
-    if (app.config['ctrl-key'])
+    if ((hotkey = app.config.hotkeyOn && app.config.hotkey)) {
       window[onOff]('keydown', maybeStart, true);
-    else
+    } else
       window[onOff]('mouseover', maybeStart, on ? {passive: true} : undefined);
   }
 
   function onStorageChanged(prefs) {
-    const ctrl = prefs['ctrl-key']?.newValue !== app.config['ctrl-key'];
-    if (ctrl)
+    const hk = !hotkey !== !(prefs.hotkeyOn?.newValue && prefs.hotkey?.newValue);
+    if (hk)
       toggleListener(false);
     for (const [k, v] of Object.entries(prefs))
       app.config[k] = v.newValue;
-    if (ctrl)
+    if (hk)
       toggleListener(true);
   }
 
@@ -106,16 +107,23 @@ window.INJECTED !== 1 && (() => {
   function maybeStart(e) {
     if (timer)
       stopAll();
-    const isCtrl = e.key === 'Control' && !e.altKey && !e.shiftKey && !e.metaKey;
+    const isHotkey = e.key && hotkey && hotkey === [
+      e.ctrlKey && 'Ctrl',
+      e.altKey && 'Alt',
+      e.shiftKey && 'Shift',
+      e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Shift' && e.key,
+    ].filter(Boolean).join('-');
     if (app.player.element ||
-        e.shiftKey ||
+        e.shiftKey && hotkey !== 'Shift' ||
         e.repeat ||
-        (e.key ? !isCtrl : e.pageX === hoverX && e.pageY === hoverY))
+        (e.key ? !isHotkey : e.pageX === hoverX && e.pageY === hoverY))
       return;
+    if (isHotkey)
+      e.preventDefault();
     hoverX = e.pageX;
     hoverY = e.pageY;
-    const path = isCtrl ? [...document.querySelectorAll(':hover')] : e.composedPath();
-    const target = isCtrl && path[path.length - 1] || e.target;
+    const path = isHotkey ? [...document.querySelectorAll(':hover')] : e.composedPath();
+    const target = isHotkey && path[path.length - 1] || e.target;
     const numBad = badBubblePath.indexOf(target) + 1;
     if (numBad) {
       badBubblePath.splice(0, numBad);

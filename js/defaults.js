@@ -1,14 +1,14 @@
 'use strict';
 
-/* exported DEFAULTS */
 /** @namespace YT.Config */
-var DEFAULTS = {
-  'ctrl-key': 0,
+self.DEFAULTS = {
   'center-x': 0,
   'center-y': 0,
   'dark': false,
   'delay': 1000,
   'history': true,
+  'hotkey': '',
+  'hotkeyOn': false,
   'maxMovement': 10,
   'mode': 0,
   'native': false,

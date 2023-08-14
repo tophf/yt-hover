@@ -1,7 +1,6 @@
 'use strict';
 
 self.oninstall = () => importScripts('bg-install.js'); /* global onInstalled */
-chrome.runtime.onInstalled.addListener(() => onInstalled());
 chrome.runtime.onMessage.addListener(onMessage);
 
 const COMMANDS = {

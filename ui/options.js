@@ -25,6 +25,20 @@ document.getElementById('history').onclick = function () {
   }
 };
 
+document.getElementById('hotkey').onkeydown = function (e) {
+  const key = [
+    e.ctrlKey && 'Ctrl',
+    e.altKey && 'Alt',
+    e.shiftKey && 'Shift',
+    e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Shift' && e.key,
+  ].filter(Boolean).join('-');
+  if (key !== 'Tab' && key !== 'Shift-Tab') {
+    e.preventDefault();
+    this.value = key;
+    chrome.storage.sync.set({[this.id]: key});
+  }
+};
+
 chrome.storage.sync.get(DEFAULTS, prefs => {
   prefs.delay = isNaN(prefs.delay) ? DEFAULTS.delay : prefs.delay / 1000;
   for (const [k, v] of Object.entries(prefs)) {
