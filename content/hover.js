@@ -6,17 +6,15 @@ window.INJECTED !== 1 && (() => {
   const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//youtu.be/"]';
   const isYoutubePage = location.hostname === 'www.youtube.com';
 
-  let observer;
   const observerConfig = {
     childList: true,
     attributes: true,
     characterData: true,
     subtree: true,
   };
+  let observer;
 
-  let badBubblePath = [];
   let lastLink = null;
-
   let timer;
   let hotkey;
   let hoverX = Infinity;
@@ -103,16 +101,21 @@ window.INJECTED !== 1 && (() => {
       toggleListener(true);
   }
 
+  function getKeyName(e) {
+    const mod =
+      (e.ctrlKey ? 'Ctrl-' : '') +
+      (e.altKey ? 'Alt-' : '') +
+      (e.shiftKey ? 'Shift-' : '');
+    return e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift'
+      ? mod.slice(0, -1)
+      : mod + e.key;
+  }
+
   /** @param {MouseEvent|KeyboardEvent} e */
   function maybeStart(e) {
     if (timer)
       stopAll();
-    const isHotkey = e.key && hotkey && hotkey === [
-      e.ctrlKey && 'Ctrl',
-      e.altKey && 'Alt',
-      e.shiftKey && 'Shift',
-      e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Shift' && e.key,
-    ].filter(Boolean).join('-');
+    const isHotkey = e.key && hotkey && hotkey === getKeyName(e);
     if (app.player.element ||
         e.shiftKey && hotkey !== 'Shift' ||
         e.repeat ||
@@ -124,26 +127,21 @@ window.INJECTED !== 1 && (() => {
     hoverY = e.pageY;
     const path = isHotkey ? [...document.querySelectorAll(':hover')] : e.composedPath();
     const target = isHotkey && path[path.length - 1] || e.target;
-    const numBad = badBubblePath.indexOf(target) + 1;
-    if (numBad) {
-      badBubblePath.splice(0, numBad);
-    } else {
-      const a = isYoutubePage ? findYoutubeAnchor(target, path) : path.find(isAnchor);
-      const info = a && processLink(a);
-      badBubblePath = path.slice(1);
-      if (info) {
-        lastLink = a;
-        hoverTarget = e.target;
-        hoverFocus = document.hasFocus();
-        hoverUrl = location.href;
-        hoverDistance = 0;
-        if (e.key) {
-          onTimer(info);
-        } else {
-          startTimer(info);
-          addEventListener('mousemove', onMouseMove, {passive: true});
-          addEventListener('mousedown', app.hover.onclick);
-        }
+    const a = isYoutubePage ? findYoutubeAnchor(target, path) : path.find(isAnchor);
+    const info = a && processLink(a);
+    if (info) {
+      e.stopPropagation();
+      lastLink = a;
+      hoverTarget = e.target;
+      hoverFocus = document.hasFocus();
+      hoverUrl = location.href;
+      hoverDistance = 0;
+      if (e.key) {
+        onTimer(info);
+      } else {
+        startTimer(info);
+        addEventListener('mousemove', onMouseMove, {passive: true});
+        addEventListener('mousedown', app.hover.onclick);
       }
     }
 
