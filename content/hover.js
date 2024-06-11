@@ -132,7 +132,7 @@ window.INJECTED !== 1 && (() => {
     if (info) {
       e.stopPropagation();
       lastLink = a;
-      hoverTarget = e.target;
+      hoverTarget = target;
       hoverFocus = document.hasFocus();
       hoverUrl = location.href;
       hoverDistance = 0;
