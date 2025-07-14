@@ -180,7 +180,7 @@ window.INJECTED !== 1 && (() => {
     let id;
     if (isYTbe) {
       id = p.split('/')[1];
-    } else if (p.startsWith('/embed/')) {
+    } else if (p.startsWith('/embed/') || p.startsWith('/shorts/')) {
       id = p.split('/')[2];
     } else if (p.startsWith('/watch')) {
       id = params.get('v');
