@@ -3,7 +3,8 @@
 window.INJECTED !== 1 && (() => {
   window.INJECTED = 1;
 
-  const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//m.youtube.com/"], a[href*="//youtu.be/"]';
+  const LINK_SELECTOR = 'a[href*="//www.youtube.com/"], a[href*="//youtube.com/"], ' +
+    'a[href*="//m.youtube.com/"], a[href*="//youtu.be/"]';
   const isYoutubePage = location.hostname === 'www.youtube.com';
 
   const observerConfig = {
@@ -170,7 +171,7 @@ window.INJECTED !== 1 && (() => {
   /** @param {HTMLAnchorElement} link */
   function processLink(link) {
     const h = link.hostname;
-    const isYT = h.endsWith('.youtube.com');
+    const isYT = /(^|\.)youtube\.com$/.test(h);
     const isYTbe = h === 'youtu.be';
     if (!isYT && !isYTbe)
       return;
