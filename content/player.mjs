@@ -204,6 +204,7 @@ function createDomFrame() {
   return $create('iframe', {
     allowFullscreen: true,
     sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
+    src: location.host === 'www.youtube.com' ? 'https://blank.org/#' : '',
   });
 }
 
@@ -239,7 +240,7 @@ async function setSource({id, link, time, isShared}) {
     if (app.config.native && await setNativeSource(id)) {
       dom.actor.currentTime = start;
     } else {
-      dom.actor.src = `https://www.youtube.com/embed/${id}?${new URLSearchParams({
+      dom.actor.src += `https://www.youtube.com/embed/${id}?${new URLSearchParams({
         start,
         fs: 1,
         autoplay: 1,
