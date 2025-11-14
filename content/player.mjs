@@ -204,7 +204,6 @@ function createDomFrame() {
   return $create('iframe', {
     allowFullscreen: true,
     sandbox: 'allow-scripts allow-same-origin allow-presentation allow-popups',
-    src: location.host === 'www.youtube.com' ? 'https://blank.org/#' : '',
   });
 }
 
@@ -229,6 +228,7 @@ function createDomVideo() {
 }
 
 async function setSource({id, link, time, isShared}) {
+  const YT = 'https://www.youtube.com/';
   const thisStyle = dom.style;
   const start = calcStartTime(time);
   const timer = setTimeout(showProgress, 0, link);
@@ -240,7 +240,9 @@ async function setSource({id, link, time, isShared}) {
     if (app.config.native && await setNativeSource(id)) {
       dom.actor.currentTime = start;
     } else {
-      dom.actor.src += `https://www.youtube.com/embed/${id}?${new URLSearchParams({
+      dom.actor.src = `${
+        location.href.startsWith(YT) ? 'https://blank.org/#' : ''
+      }${YT}embed/${id}?${new URLSearchParams({
         start,
         fs: 1,
         autoplay: 1,
