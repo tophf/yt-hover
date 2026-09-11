@@ -3,7 +3,7 @@
   "short_name": "ihvyoutube",
   "description": "View YouTube while hovering mouse over a YouTube link on any website",
   "author": "tophf",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "manifest_version": 3,
   "minimum_chrome_version": "99",
   "permissions": [
@@ -26,9 +26,9 @@
     "all_frames": true,
     "match_origin_as_fallback": true
   }, {
-    "matches": ["https://blank.org/"],
+    "matches": ["https://www.webpagetest.org/blank.html"],
     "include_globs": ["*#https://www.youtube.com/embed*"],
-    "js": ["content/blank.org.js"],
+    "js": ["content/blank.js"],
     "run_at": "document_start",
     "all_frames": true
   }],

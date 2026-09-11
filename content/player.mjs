@@ -241,7 +241,7 @@ async function setSource({id, link, time, isShared}) {
       dom.actor.currentTime = start;
     } else {
       dom.actor.src = `${
-        location.href.startsWith(YT) ? 'https://blank.org/#' : ''
+        location.href.startsWith(YT) ? 'https://www.webpagetest.org/blank.html#' : ''
       }${YT}embed/${id}?${new URLSearchParams({
         start,
         fs: 1,
